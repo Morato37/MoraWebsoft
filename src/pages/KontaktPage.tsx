@@ -317,6 +317,12 @@ export default function KontaktPage() {
             <button
               type="submit"
               disabled={submitting}
+              aria-busy={submitting}
+              onClick={() => {
+                if (!name.trim() || !email.trim() || !nachricht.trim()) {
+                  setError('Bitte füllen Sie Name, E-Mail und Nachricht aus.');
+                }
+              }}
               className="rounded-lg bg-[#2DD4BF] px-6 py-3 font-semibold text-[#0B0F1A] transition-colors hover:bg-[#0F766E] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Wird gesendet…' : 'Anfrage senden'}
