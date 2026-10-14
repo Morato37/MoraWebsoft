@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.admin-area,
+.admin-area * {
+  cursor: auto !important;
+}
+
+.admin-area button,
+.admin-area a,
+.admin-area [role="button"] {
+  cursor: pointer !important;
+}
+
+.admin-area input,
+.admin-area textarea,
+.admin-area select {
+  background-color: #12122a !important;
+  color: #ffffff !important;
+}
+
+@layer base {
+  * {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #05050f;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+.typing-cursor {
+  animation: blink 1s step-end infinite;
+  color: #2DD4BF;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .typing-cursor {
+    animation: none;
+  }
+}
+
+*:focus-visible {
+  outline: 2px solid #2DD4BF;
+  outline-offset: 2px;
+}
+
+/* ===== Morawebsoft public design system ===== */
+.public {
+  --accent: #2DD4BF;
+  --accent-2: #22d3ee;
+  --violet: #a78bfa;
+  background-color: #070b14;
+  color: #E5E7EB;
+}
+.public ::selection { background: rgba(45,212,191,0.35); color: #fff; }
+
+.text-gradient {
+  background: linear-gradient(92deg, #2DD4BF 0%, #22d3ee 45%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-gradient-animated {
+  background: linear-gradient(90deg, #2DD4BF, #22d3ee, #a78bfa, #2DD4BF);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradientShift 6s linear infinite;
+}
+@keyframes gradientShift { to { background-position: 300% 0; } }
+
+.noise::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.aurora-blob {
+  position: absolute; border-radius: 9999px; filter: blur(90px); opacity: 0.55; will-change: transform;
+}
+.aurora-1 { width: 55vw; height: 55vw; max-width: 760px; max-height: 760px; left: -12%; top: -20%; background: radial-gradient(circle, rgba(45,212,191,0.55), transparent 60%); animation: drift1 18s ease-in-out infinite alternate; }
+.aurora-2 { width: 45vw; height: 45vw; max-width: 620px; max-height: 620px; right: -10%; top: 10%; background: radial-gradient(circle, rgba(167,139,250,0.45), transparent 60%); animation: drift2 22s ease-in-out infinite alternate; }
+.aurora-3 { width: 40vw; height: 40vw; max-width: 520px; max-height: 520px; left: 30%; bottom: -25%; background: radial-gradient(circle, rgba(34,211,238,0.4), transparent 60%); animation: drift3 26s ease-in-out infinite alternate; }
+@keyframes drift1 { to { transform: translate(14vw, 10vh) scale(1.15); } }
+@keyframes drift2 { to { transform: translate(-12vw, 16vh) scale(0.9); } }
+@keyframes drift3 { to { transform: translate(-10vw, -12vh) scale(1.2); } }
+
+.marquee-mask { -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.marquee-track { animation: marquee linear infinite; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee-mask:hover .marquee-track { animation-play-state: paused; }
+
+.glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+
+.beam-border { position: relative; }
+.beam-border::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+  background: conic-gradient(from var(--beam-angle, 0deg), transparent 0 70%, #2DD4BF 85%, #a78bfa 95%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: beamSpin 5s linear infinite;
+}
+@property --beam-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes beamSpin { to { --beam-angle: 360deg; } }
+
+.float-slow { animation: floatY 7s ease-in-out infinite; }
+@keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+
+.scroll-hint { animation: scrollHint 1.8s ease-in-out infinite; }
+@keyframes scrollHint { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(8px); opacity: 1; } }
+
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob, .marquee-track, .beam-border::before, .float-slow, .scroll-hint, .text-gradient-animated { animation: none !important; }
+}
+
+.reveal-section { opacity: 0; transform: translateY(28px); transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1); }
+.reveal-section.in-view { opacity: 1; transform: none; }
+.public main > div > section:first-child { opacity: 1; transform: none; }
+.public .border-\[\#374151\] { border-color: rgba(255,255,255,0.08) !important; }
+.public .bg-\[\#1F2937\] { background-color: rgba(255,255,255,0.03) !important; backdrop-filter: blur(6px); }
+.public .rounded-xl.border { transition: border-color 0.4s, transform 0.4s, box-shadow 0.4s; }
+.public .rounded-xl.border:hover { border-color: rgba(45,212,191,0.45) !important; box-shadow: 0 20px 60px -30px rgba(45,212,191,0.35); }
+.public .bg-\[\#2DD4BF\] { box-shadow: 0 0 0 0 rgba(45,212,191,0); transition: box-shadow 0.4s, background-color 0.3s, color 0.3s; }
+.public .bg-\[\#2DD4BF\]:hover { box-shadow: 0 0 36px -6px rgba(45,212,191,0.7); }
+.public h1, .public h2 { letter-spacing: -0.02em; }
