@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.admin-area,
+.admin-area * {
+  cursor: auto !important;
+}
+
+.admin-area button,
+.admin-area a,
+.admin-area [role="button"] {
+  cursor: pointer !important;
+}
+
+.admin-area input,
+.admin-area textarea,
+.admin-area select {
+  background-color: #12122a !important;
+  color: #ffffff !important;
+}
+
+@layer base {
+  * {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #05050f;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+.typing-cursor {
+  animation: blink 1s step-end infinite;
+  color: #2DD4BF;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .typing-cursor {
+    animation: none;
+  }
+}
+
+*:focus-visible {
+  outline: 2px solid #2DD4BF;
+  outline-offset: 2px;
+}
