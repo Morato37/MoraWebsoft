@@ -29,6 +29,44 @@ export interface InvoiceItem {
   total: number;
 }
 
+export interface CatalogItem {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  unit_price: number;
+  created_at: string;
+}
+
+export interface QuoteItem {
+  id: string;
+  description: string;
+  note: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface Quote {
+  id: string;
+  quote_number: string;
+  customer_id: string;
+  title: string;
+  status: string;
+  valid_until: string;
+  payment_terms: string;
+  discount: number;
+  tax_rate: number;
+  subtotal: number;
+  discount_amount: number;
+  tax_amount: number;
+  total: number;
+  notes: string;
+  items: QuoteItem[];
+  created_at: string;
+  updated_at: string;
+  admin_customers?: { name: string; company: string; email?: string; address?: string; phone?: string };
+}
+
 export interface Invoice {
   id: string;
   invoice_number: string;

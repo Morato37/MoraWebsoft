@@ -5,16 +5,18 @@ import Orders from './Orders';
 import Invoices from './Invoices';
 import CvRequests from './CvRequests';
 import Crm from './Crm';
+import Quotes from './Quotes';
 import { useNotifications } from './useNotifications';
-import { Users, ClipboardList, FileText, LogOut, Terminal, FolderOpen, LayoutDashboard, Bell } from 'lucide-react';
+import { Users, ClipboardList, FileText, FileSignature, LogOut, Terminal, FolderOpen, LayoutDashboard, Bell } from 'lucide-react';
 
-type Tab = 'crm' | 'customers' | 'orders' | 'invoices' | 'cv';
+type Tab = 'crm' | 'customers' | 'orders' | 'invoices' | 'quotes' | 'cv';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'crm', label: 'CRM', icon: <LayoutDashboard size={15} /> },
   { id: 'customers', label: 'Kunden', icon: <Users size={15} /> },
   { id: 'orders', label: 'Aufträge', icon: <ClipboardList size={15} /> },
   { id: 'invoices', label: 'Rechnungen', icon: <FileText size={15} /> },
+  { id: 'quotes', label: 'Offerten', icon: <FileSignature size={15} /> },
   { id: 'cv', label: 'CV-Anfragen', icon: <FolderOpen size={15} /> },
 ];
 
@@ -88,6 +90,7 @@ export default function AdminDashboard({ onLogout }: Props) {
         {tab === 'customers' && <Customers />}
         {tab === 'orders' && <Orders />}
         {tab === 'invoices' && <Invoices />}
+        {tab === 'quotes' && <Quotes />}
         {tab === 'cv' && <CvRequests />}
       </div>
     </div>
