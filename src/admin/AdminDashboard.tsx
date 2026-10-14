@@ -14,9 +14,9 @@ type Tab = 'crm' | 'customers' | 'orders' | 'invoices' | 'quotes' | 'cv';
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'crm', label: 'CRM', icon: <LayoutDashboard size={15} /> },
   { id: 'customers', label: 'Kunden', icon: <Users size={15} /> },
+  { id: 'quotes', label: 'Offerten', icon: <FileSignature size={15} /> },
   { id: 'orders', label: 'Aufträge', icon: <ClipboardList size={15} /> },
   { id: 'invoices', label: 'Rechnungen', icon: <FileText size={15} /> },
-  { id: 'quotes', label: 'Offerten', icon: <FileSignature size={15} /> },
   { id: 'cv', label: 'CV-Anfragen', icon: <FolderOpen size={15} /> },
 ];
 

@@ -55,7 +55,7 @@ export default function Quotes() {
     if (settingsError) return settingsError;
     if ((settings?.catalog_version ?? 0) >= CATALOG_VERSION) return null;
 
-    const { error: deactivateError } = await supabase.from('admin_catalog_items').update({ active: false }).not('id', 'is', null);
+    const { error: deactivateError } = await supabase.from('admin_catalog_items').update({ active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
     if (deactivateError) return deactivateError;
     const { error: upsertError } = await supabase.from('admin_catalog_items').upsert(DEFAULT_CATALOG, { onConflict: 'key' });
     if (upsertError) return upsertError;
