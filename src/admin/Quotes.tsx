@@ -117,11 +117,26 @@ export default function Quotes() {
     if (!modal.form.customer_id || !modal.form.title.trim()) return;
     setSaving(true);
     const number = modal.id ? undefined : `OF-${new Date().getFullYear()}-${String(quotes.length + 1).padStart(3, '0')}`;
-    const payload = { ...modal.form, ...(number ? { quote_number: number } : {}), ...quoteTotals, items: modal.form.items.filter(item => item.description.trim()) };
+    const payload = {
+      ...(number ? { quote_number: number } : {}),
+      customer_id: modal.form.customer_id,
+      title: modal.form.title.trim(),
+      status: modal.form.status,
+      valid_until: modal.form.valid_until,
+      payment_terms: modal.form.payment_terms,
+      discount: Number(modal.form.discount),
+      tax_rate: Number(modal.form.tax_rate),
+      notes: modal.form.notes,
+      items: modal.form.items.filter(item => item.description.trim()),
+      ...quoteTotals,
+    };
     const result = modal.id
       ? await supabase.from('admin_quotes').update(payload).eq('id', modal.id)
       : await supabase.from('admin_quotes').insert(payload);
-    if (result.error) setError('Die Offerte konnte nicht gespeichert werden.');
+    if (result.error) {
+      console.error('Quote save failed', result.error);
+      setError(`Die Offerte konnte nicht gespeichert werden: ${result.error.message}`);
+    }
     else { closeModal(); load(); }
     setSaving(false);
   };
