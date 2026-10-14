@@ -64,7 +64,7 @@ export const projects: Project[] = [
     description: 'Firmenwebsite mit integriertem Einzelhandels- und Abo-Shop. Vollständige E-Commerce-Lösung.',
     tags: ['Next.js', 'Stripe', 'Supabase'],
     projectTags: ['webdesign', 'schnittstellen'],
-    url: 'https://kaleidoscopic-kitten-e2ec36.netlify.app/',
+    url: 'https://modern-dark-landing-3b4y.bolt.host',
     image: '/ref-shop.jpg',
   },
   {
