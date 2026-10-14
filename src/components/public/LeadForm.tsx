@@ -46,7 +46,7 @@ export default function LeadForm({ leistung, quelle = 'landingpage' }: LeadFormP
 
     try {
       const { error: dbError } = await supabase.from('admin_leads').insert(leadRow);
-      if (dbError) throw new Error(dbError.message);
+      if (dbError) throw new Error('lead-submit-failed');
 
       if (web3formsKey) {
         try {
@@ -72,11 +72,8 @@ export default function LeadForm({ leistung, quelle = 'landingpage' }: LeadFormP
 
       navigate('/danke');
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? `Beim Senden ist ein Fehler aufgetreten: ${err.message}. Bitte versuchen Sie es erneut oder schreiben Sie direkt an matteo@morawebsoft.com.`
-          : 'Beim Senden ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.'
-      );
+      console.error('lead form submit failed', err);
+      setError('Beim Senden ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder schreiben Sie direkt an matteo@morawebsoft.com.');
       setSubmitting(false);
     }
   }

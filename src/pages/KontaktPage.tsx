@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ExternalLink, Linkedin, Mail, Phone } from 'lucide-react';
+import { ChevronDown, ExternalLink, Linkedin, Mail, Phone } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Seo from '../components/public/Seo';
 import { trackEvent } from '../lib/analytics';
@@ -34,6 +34,7 @@ export default function KontaktPage() {
   const [honeypot, setHoneypot] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [serviceOpen, setServiceOpen] = useState(false);
 
   useEffect(() => {
     if (preselectLeistung) {
@@ -70,7 +71,7 @@ export default function KontaktPage() {
 
     try {
       const { error: dbError } = await supabase.from('admin_leads').insert(leadRow);
-      if (dbError) throw new Error(dbError.message);
+      if (dbError) throw new Error('contact-submit-failed');
 
       if (web3formsKey) {
         try {
@@ -96,11 +97,8 @@ export default function KontaktPage() {
 
       navigate('/danke');
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? `Beim Senden ist ein Fehler aufgetreten: ${err.message}. Bitte versuchen Sie es erneut oder schreiben Sie direkt an matteo@morawebsoft.com.`
-          : 'Beim Senden ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.'
-      );
+      console.error('contact form submit failed', err);
+      setError('Beim Senden ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder schreiben Sie direkt an matteo@morawebsoft.com.');
       setSubmitting(false);
     }
   }
@@ -257,19 +255,27 @@ export default function KontaktPage() {
               </div>
             </div>
 
-            <div>
+            <div className="relative">
               <label htmlFor="leistung" className={labelClass}>Leistung</label>
-              <select
+              <button
                 id="leistung"
-                value={leistung}
-                onChange={e => setLeistung(e.target.value)}
-                className={inputClass}
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded={serviceOpen}
+                onClick={() => setServiceOpen(open => !open)}
+                className={`${inputClass} flex items-center justify-between text-left ${leistung ? 'text-[#E5E7EB]' : 'text-[#9CA3AF]'}`}
               >
-                <option value="">Bitte wählen</option>
-                {LEISTUNGEN.map(l => (
-                  <option key={l} value={l}>{l}</option>
-                ))}
-              </select>
+                <span>{leistung || 'Bitte wählen'}</span>
+                <ChevronDown size={17} className={`text-[#2DD4BF] transition-transform ${serviceOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {serviceOpen && (
+                <div role="listbox" aria-label="Leistung auswählen" className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-[#2DD4BF]/60 bg-[#111827] p-1 shadow-2xl shadow-black/40">
+                  <button type="button" role="option" aria-selected={!leistung} onClick={() => { setLeistung(''); setServiceOpen(false); }} className="block w-full rounded-md px-3 py-2.5 text-left text-sm text-[#9CA3AF] transition-colors hover:bg-[#1F2937] hover:text-white">Bitte wählen</button>
+                  {LEISTUNGEN.map(item => (
+                    <button type="button" role="option" aria-selected={leistung === item} key={item} onClick={() => { setLeistung(item); setServiceOpen(false); }} className={`block w-full rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-[#1F2937] hover:text-white ${leistung === item ? 'bg-[#2DD4BF]/15 font-semibold text-[#5EEAD4]' : 'text-[#E5E7EB]'}`}>{item}</button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>

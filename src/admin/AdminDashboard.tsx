@@ -4,11 +4,13 @@ import Customers from './Customers';
 import Orders from './Orders';
 import Invoices from './Invoices';
 import CvRequests from './CvRequests';
-import { Users, ClipboardList, FileText, LogOut, Terminal, FolderOpen } from 'lucide-react';
+import Crm from './Crm';
+import { Users, ClipboardList, FileText, LogOut, Terminal, FolderOpen, LayoutDashboard } from 'lucide-react';
 
-type Tab = 'customers' | 'orders' | 'invoices' | 'cv';
+type Tab = 'crm' | 'customers' | 'orders' | 'invoices' | 'cv';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  { id: 'crm', label: 'CRM', icon: <LayoutDashboard size={15} /> },
   { id: 'customers', label: 'Kunden', icon: <Users size={15} /> },
   { id: 'orders', label: 'Aufträge', icon: <ClipboardList size={15} /> },
   { id: 'invoices', label: 'Rechnungen', icon: <FileText size={15} /> },
@@ -20,7 +22,7 @@ interface Props {
 }
 
 export default function AdminDashboard({ onLogout }: Props) {
-  const [tab, setTab] = useState<Tab>('customers');
+  const [tab, setTab] = useState<Tab>('crm');
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -28,10 +30,10 @@ export default function AdminDashboard({ onLogout }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#05050f]">
+    <div className="admin-shell min-h-screen bg-[#070b14] text-slate-100">
       {/* Topbar */}
-      <div className="border-b border-white/8 bg-[#0a0a18]/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="sticky top-0 z-40 border-b border-slate-700 bg-[#0b1220]/95 backdrop-blur-sm">
+        <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-lg bg-[#0f0f1a] border border-cyan-400/20 flex items-center justify-center">
               <Terminal size={13} className="text-cyan-400" />
@@ -39,15 +41,15 @@ export default function AdminDashboard({ onLogout }: Props) {
             <span className="font-mono text-xs text-white/40 tracking-widest uppercase">Admin</span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="order-3 flex w-full items-center gap-1 overflow-x-auto pb-0.5 lg:order-2 lg:w-auto">
             {TABS.map(t => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
                   tab === t.id
-                    ? 'bg-cyan-400/10 text-cyan-400 border border-cyan-400/20'
-                    : 'text-white/35 hover:text-white/60 border border-transparent'
+                    ? 'border border-cyan-400/40 bg-cyan-400/15 text-cyan-200'
+                    : 'border border-transparent text-slate-300 hover:border-slate-600 hover:bg-slate-800 hover:text-white'
                 }`}
               >
                 {t.icon} {t.label}
@@ -57,7 +59,7 @@ export default function AdminDashboard({ onLogout }: Props) {
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs font-mono text-white/30 hover:text-white/60 transition-colors"
+            className="order-2 flex items-center gap-1.5 text-xs font-mono text-slate-300 transition-colors hover:text-white lg:order-3"
           >
             <LogOut size={13} /> Logout
           </button>
@@ -66,6 +68,7 @@ export default function AdminDashboard({ onLogout }: Props) {
 
       {/* Content */}
       <div className="max-w-5xl mx-auto px-4 py-8">
+        {tab === 'crm' && <Crm />}
         {tab === 'customers' && <Customers />}
         {tab === 'orders' && <Orders />}
         {tab === 'invoices' && <Invoices />}

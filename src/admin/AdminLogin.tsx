@@ -19,7 +19,7 @@ export default function AdminLogin({ onLogin }: Props) {
     const { error: err } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (err) {
-      setError(err.message);
+      setError('Anmeldung fehlgeschlagen. Bitte prüfen Sie Ihre Zugangsdaten.');
     } else {
       onLogin();
     }
