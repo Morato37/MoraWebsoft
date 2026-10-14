@@ -1,9 +1,5 @@
 import { Link } from 'react-router-dom';
 import Seo from '../../components/public/Seo';
-import { trackEvent } from '../../lib/analytics';
-
-const BOOKING_URL = import.meta.env.VITE_BOOKING_URL ?? 'https://cal.com/morawebsoft';
-
 export default function DankePage() {
   return (
     <>
@@ -20,7 +16,7 @@ export default function DankePage() {
           Danke, ich melde mich innert 24 Stunden.
         </h1>
         <p className="mt-6 max-w-xl text-base leading-7 text-[#9CA3AF]">
-          In der Zwischenzeit: drei Referenzen ansehen oder direkt einen Termin wählen, dann geht es schneller.
+          In der Zwischenzeit können Sie drei Referenzen ansehen oder direkt eine weitere Anfrage senden.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
           <Link
@@ -29,15 +25,12 @@ export default function DankePage() {
           >
             Referenzen
           </Link>
-          <a
-            href={BOOKING_URL}
-            target="_blank"
-            rel="noreferrer"
-            onClick={() => trackEvent('booking_click', { source: 'danke' })}
+          <Link
+            to="/kontakt"
             className="rounded-lg bg-[#2DD4BF] px-6 py-3 text-center font-semibold text-[#0B0F1A] transition-colors hover:bg-[#0F766E] hover:text-white"
           >
-            Termin wählen
-          </a>
+            Anfrage senden
+          </Link>
         </div>
       </section>
 

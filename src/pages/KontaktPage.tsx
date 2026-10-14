@@ -1,12 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar, ExternalLink, Linkedin, Mail, Phone } from 'lucide-react';
+import { ExternalLink, Linkedin, Mail, Phone } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Seo from '../components/public/Seo';
 import { trackEvent } from '../lib/analytics';
-
-const BOOKING_URL = import.meta.env.VITE_BOOKING_URL ?? 'https://cal.com/morawebsoft';
-const BOOKING_EMBED_URL = `${BOOKING_URL}${BOOKING_URL.includes('?') ? '&' : '?'}embed=true`;
 
 const LEISTUNGEN = [
   'Webengineering',
@@ -116,8 +113,8 @@ export default function KontaktPage() {
     <>
       <MetaTags />
       <Seo
-        title="Kontakt | Erstgespräch buchen | Morawebsoft"
-        description="Buchen Sie ein kostenloses 20-Minuten-Erstgespräch, rufen Sie an oder schreiben Sie. Antwort innert 24 Stunden an Werktagen."
+        title="Kontakt | Anfrage senden | Morawebsoft"
+        description="Senden Sie Ihre Projektanfrage, rufen Sie an oder schreiben Sie. Antwort innert 24 Stunden an Werktagen. Für konkrete Projekte nutzen Sie am besten das Formular."
         path="/kontakt"
       />
 
@@ -125,7 +122,7 @@ export default function KontaktPage() {
       <section className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8 sm:py-20">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Kontakt</p>
         <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight text-[#E5E7EB] sm:text-5xl">
-          Drei Wege, die alle bei mir landen.
+          Ihre Anfrage, direkt bei mir.
         </h1>
       </section>
 
@@ -133,32 +130,6 @@ export default function KontaktPage() {
       <section className="border-t border-[#374151] py-12 sm:py-20">
         <div className="mx-auto max-w-[1200px] px-6 sm:px-8">
           <div className="grid gap-6 md:grid-cols-3">
-            {/* Termin wählen */}
-            <div className="flex flex-col rounded-xl border border-[#2DD4BF]/60 bg-[#1F2937] p-6">
-              <div className="flex items-center gap-3">
-                <Calendar size={22} className="text-[#2DD4BF]" />
-                <h3 className="text-lg font-bold text-[#E5E7EB]">Termin wählen</h3>
-              </div>
-              <p className="mt-3 text-sm text-[#9CA3AF]">20 Minuten Video, kostenlos.</p>
-              <div className="mt-4 flex-1 overflow-hidden rounded-lg border border-[#374151]">
-                <iframe
-                  src={BOOKING_EMBED_URL}
-                  title="Termin buchen"
-                  className="h-[280px] w-full border-0"
-                  loading="lazy"
-                />
-              </div>
-              <a
-                href={BOOKING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackEvent('booking_click', { source: 'kontakt' })}
-                className="mt-4 inline-flex w-full justify-center rounded-lg bg-[#2DD4BF] px-5 py-3 font-semibold text-[#0B0F1A] transition-colors hover:bg-[#0F766E] hover:text-white"
-              >
-                In neuem Tab öffnen
-              </a>
-            </div>
-
             {/* Anrufen */}
             <div className="flex flex-col rounded-xl border border-[#374151] bg-[#1F2937] p-6">
               <div className="flex items-center gap-3">
@@ -184,7 +155,7 @@ export default function KontaktPage() {
                 <h3 className="text-lg font-bold text-[#E5E7EB]">Schreiben</h3>
               </div>
               <p className="mt-3 text-sm leading-6 text-[#9CA3AF]">
-                Antwort innert 24 Stunden an Werktagen.
+                Antwort innert 24 Stunden an Werktagen. Für konkrete Projekte nutzen Sie am besten das Formular.
               </p>
               <a
                 href="mailto:matteo@morawebsoft.com"

@@ -20,11 +20,12 @@ const slots: FileSlot[] = [
 ];
 
 const accents = [
-  { name: 'Türkis', hex: '#2DD4BF' }, { name: 'Blau', hex: '#3B82F6' }, { name: 'Violett', hex: '#A78BFA' },
+  { name: 'Türkis', hex: '#2DD4BF' }, { name: 'Blau', hex: '#3B82F6' }, { name: 'Gelb', hex: '#EAB308' },
   { name: 'Grün', hex: '#22C55E' }, { name: 'Orange', hex: '#F97316' }, { name: 'Rot', hex: '#EF4444' },
 ];
 
 const slugify = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+const allowedMimeTypes = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
 
 const inputCls = 'w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[#E5E7EB] outline-none transition-colors placeholder:text-[#4B5563] focus:border-[#2DD4BF]/70 focus:bg-white/[0.05]';
 const labelCls = 'mb-1.5 block text-sm font-medium text-[#A8B1C2]';
@@ -54,6 +55,8 @@ export default function CvBestellenPage() {
     const list = Array.from(e.target.files ?? []);
     const tooBig = list.find(f => f.size > 15 * 1024 * 1024);
     if (tooBig) { setError(`${tooBig.name} ist grösser als 15 MB.`); return; }
+    const invalidType = list.find(f => !allowedMimeTypes.has(f.type));
+    if (invalidType) { setError(`${invalidType.name} hat kein unterstütztes Dateiformat.`); return; }
     setError('');
     setFiles(f => ({ ...f, [key]: multiple ? [...f[key], ...list] : list.slice(0, 1) }));
     e.target.value = '';
@@ -75,9 +78,10 @@ export default function CvBestellenPage() {
       for (let i = 0; i < all.length; i++) {
         const { slot, f } = all[i];
         setProgress(`Lade ${f.name} hoch (${i + 1}/${all.length})`);
-        const path = `${id}/${slot}/${Date.now()}-${slugify(f.name.replace(/\.[^.]+$/, ''))}.${f.name.split('.').pop()}`;
+        const extension = f.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
+        const path = `${id}/${slot}/${Date.now()}-${slugify(f.name.replace(/\.[^.]+$/, ''))}.${extension}`;
         const { error: upErr } = await supabase.storage.from('cv-uploads').upload(path, f, { upsert: false });
-        if (upErr) throw new Error(`Upload fehlgeschlagen: ${upErr.message}`);
+        if (upErr) throw new Error('Upload fehlgeschlagen');
         uploaded.push({ slot, name: f.name, path, size: f.size });
       }
       setProgress('Speichere Bestellung');
@@ -87,12 +91,12 @@ export default function CvBestellenPage() {
         zielposition: form.zielposition, sprache: form.sprache, design: form.design, akzentfarbe: form.akzent,
         wunschdomain: domain, domain_alt: form.domainAlt, paket: form.paket, linkedin: form.linkedin, bemerkung: form.bemerkung, dateien: uploaded,
       });
-      if (dbErr) throw new Error(dbErr.message);
+      if (dbErr) throw new Error('Anfrage konnte nicht gespeichert werden');
       const key = import.meta.env.VITE_WEB3FORMS_KEY as string | undefined;
       if (key) {
         try {
           await fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-            access_key: key, subject: `Online-CV Bestellung: ${form.vorname} ${form.nachname} (${form.paket === 'student' ? 'CHF 290' : 'CHF 490'})`,
+            access_key: key, subject: `Online-CV Anfrage: ${form.vorname} ${form.nachname} (${form.paket === 'student' ? 'CHF 290' : 'CHF 490'})`,
             from_name: 'morawebsoft.com CV-Formular', name: `${form.vorname} ${form.nachname}`, email: form.email, telefon: form.telefon,
             beruf: form.beruf, zielposition: form.zielposition, sprache: form.sprache, design: form.design, akzent: form.akzent, domain, domain_alt: form.domainAlt,
             linkedin: form.linkedin, bemerkung: form.bemerkung, dateien: uploaded.map(u => `${u.slot}: ${u.name}`).join(', '), bestell_id: id,
@@ -101,7 +105,7 @@ export default function CvBestellenPage() {
       }
       navigate('/danke?cv=1');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unbekannter Fehler. Bitte nochmals versuchen.');
+      setError(err instanceof Error ? err.message : 'Die Anfrage konnte nicht gesendet werden. Bitte nochmals versuchen.');
       setSubmitting(false); setProgress('');
     }
   }
@@ -114,13 +118,13 @@ export default function CvBestellenPage() {
 
   return (
     <>
-      <Seo title="Online-CV bestellen | Digitales CV in 5 Tagen | Morawebsoft" description="Bestellen Sie Ihren Online-Lebenslauf: Angaben, Wunschdomain, Design und Dokumente in 10 Minuten. CHF 490, Studierende CHF 290." path="/online-cv/bestellen" />
+      <Seo title="Online-CV anfragen | Digitales CV in 5 Tagen | Morawebsoft" description="Senden Sie Ihre Anfrage für einen Online-Lebenslauf: Angaben, Wunschdomain, Design und Dokumente in 10 Minuten. CHF 490, Studierende CHF 290." path="/online-cv/bestellen" />
       <section data-no-reveal className="noise relative isolate -mt-20 overflow-hidden pt-32 sm:-mt-24 sm:pt-36">
         <Aurora density={35} />
         <div className="relative z-10 mx-auto max-w-[1100px] px-6 pb-10 sm:px-8">
-          <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Online-CV bestellen</p>
-          <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-white sm:text-5xl">In 10 Minuten bestellt, in 5 Arbeitstagen online.</h1>
-          <p className="mt-5 max-w-2xl text-base leading-8 text-[#A8B1C2]">Drei Schritte: Wer Sie sind, wie es aussehen soll, welche Unterlagen ich bekomme. Danach erhalten Sie innert 24 Stunden eine Bestätigung mit Zahlungsinfo und dem Termin für den ersten Entwurf.</p>
+          <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Online-CV anfragen</p>
+          <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-white sm:text-5xl">In 10 Minuten angefragt, in 5 Arbeitstagen erhalten Sie den ersten Entwurf.</h1>
+          <p className="mt-5 max-w-2xl text-base leading-8 text-[#A8B1C2]">Drei Schritte: Wer Sie sind, wie es aussehen soll und welche Unterlagen ich bekomme. Danach melde ich mich innert 24 Stunden mit dem nächsten Schritt.</p>
         </div>
       </section>
 
@@ -254,7 +258,7 @@ export default function CvBestellenPage() {
                 <button type="button" onClick={() => setStep(s => s + 1)} disabled={step === 0 ? !validStep0 : !validStep1} className="inline-flex items-center gap-2 rounded-full bg-[#2DD4BF] px-6 py-3 text-sm font-semibold text-[#06101A] transition-shadow hover:shadow-[0_0_30px_-6px_rgba(45,212,191,0.8)] disabled:opacity-40 disabled:hover:shadow-none">Weiter <ArrowRight size={16} /></button>
               ) : (
                 <button type="submit" disabled={!validStep2 || submitting} className="inline-flex items-center gap-2 rounded-full bg-[#2DD4BF] px-6 py-3 text-sm font-semibold text-[#06101A] transition-shadow hover:shadow-[0_0_30px_-6px_rgba(45,212,191,0.8)] disabled:opacity-40">
-                  {submitting ? <><Loader2 size={16} className="animate-spin" /> {progress || 'Sende …'}</> : <>Bestellung absenden <ArrowRight size={16} /></>}
+                  {submitting ? <><Loader2 size={16} className="animate-spin" /> {progress || 'Sende …'}</> : <>Anfrage senden <ArrowRight size={16} /></>}
                 </button>
               )}
             </div>
@@ -262,7 +266,7 @@ export default function CvBestellenPage() {
 
           <aside className="space-y-4 lg:sticky lg:top-28 lg:self-start">
             <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-              <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[#2DD4BF]">Ihre Bestellung</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[#2DD4BF]">Ihre Anfrage</p>
               <p className="mt-3 text-2xl font-extrabold text-white">{form.paket === 'student' ? 'CHF 290' : 'CHF 490'}</p>
               <ul className="mt-3 space-y-1.5 text-sm text-[#A8B1C2]">
                 <li className="flex gap-2"><Check size={16} className="mt-0.5 text-[#2DD4BF]" />Domain: <span className="text-white">{form.domain || suggestedDomain || '–'}</span></li>
@@ -274,7 +278,7 @@ export default function CvBestellenPage() {
             <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 text-sm text-[#A8B1C2]">
               <p className="font-semibold text-white">So geht es weiter</p>
               <ol className="mt-2 list-decimal space-y-1 pl-4">
-                <li>Bestätigung mit Rechnung innert 24 h</li>
+                <li>Rückmeldung mit Offerte innert 24 h</li>
                 <li>Entwurf nach 3 Arbeitstagen per Link</li>
                 <li>Eine Korrekturrunde</li>
                 <li>Online unter Ihrer Domain</li>

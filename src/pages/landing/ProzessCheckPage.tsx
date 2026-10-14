@@ -22,7 +22,7 @@ export default function ProzessCheckPage() {
       ]}
       price="CHF 490"
       duration="2 h Video + Bericht"
-      buttonText="Prozess-Check buchen"
+      buttonText="Prozess-Check anfragen"
       screenshotSlug="prozess-check"
       exampleText="4 Stunden pro Woche Doppelerfassung × 48 Wochen × CHF 60 Vollkosten = CHF 11'520 pro Jahr. Eine Schnittstelle für CHF 3'900 rechnet sich in vier Monaten."
       testimonial={{
@@ -34,7 +34,7 @@ export default function ProzessCheckPage() {
       faq={[
         { question: 'Brauche ich Microsoft 365?', answer: 'Für Power Automate ja. Sonst arbeite ich mit Skripten und Schnittstellen, unabhängig vom System.' },
         { question: 'Wird der Prozess-Check wirklich angerechnet?', answer: 'Ja, vollständig, beim ersten Auftrag aus dem Bericht.' },
-        { question: 'Wie läuft die Zahlung?', answer: 'Per Terminbuchung mit Zahlung oder Rechnung nach Buchung.' },
+        { question: 'Wie läuft die Zahlung?', answer: 'Sie erhalten nach meiner Rückmeldung eine klare Offerte und können danach per Rechnung bezahlen.' },
         { question: 'Was, wenn ich keinen Auftrag will?', answer: 'Kein Problem. Der Bericht gehört Ihnen.' },
       ]}
       leistung="Automatisierung"

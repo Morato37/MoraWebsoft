@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calendar, ChevronRight, ExternalLink, Linkedin } from 'lucide-react';
+import { ChevronRight, ExternalLink, Linkedin } from 'lucide-react';
 import { cvExperiences, cvEducation, cvTechGroups, cvLanguages } from '../data/cv';
 import Seo from '../components/public/Seo';
 
@@ -28,7 +28,7 @@ export default function UeberMichPage() {
                 Referenzen ansehen
               </Link>
               <Link to="/kontakt" className="rounded-lg bg-[#2DD4BF] px-6 py-3 text-center font-semibold text-[#0B0F1A] transition-colors hover:bg-[#0F766E] hover:text-white">
-                Termin wählen
+                Anfrage senden
               </Link>
               <a
                 href="https://www.linkedin.com/in/matteo-mora-13a639204/"
@@ -153,8 +153,7 @@ export default function UeberMichPage() {
               Ich arbeite aus Rüti ZH, remote für die ganze Deutschschweiz. Zum Kickoff und zur Abnahme komme ich gerne vorbei.
             </p>
             <Link to="/kontakt" className="mt-8 inline-flex rounded-lg bg-[#2DD4BF] px-6 py-3 font-semibold text-[#0B0F1A] transition-colors hover:bg-[#0F766E] hover:text-white">
-              <Calendar size={20} className="mr-2" />
-              Termin wählen
+              Anfrage senden
             </Link>
           </div>
         </div>

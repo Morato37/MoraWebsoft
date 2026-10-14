@@ -27,8 +27,8 @@ export default function OnlineCvPage() {
             'LinkedIn-Verknüpfung',
             '1 Korrekturrunde',
           ],
-          link: '/kontakt?leistung=online-cv',
-          buttonText: 'CV bestellen',
+          link: '/online-cv/bestellen',
+          buttonText: 'Anfrage senden',
         },
         {
           name: 'Lernende und Studierende',
@@ -38,8 +38,8 @@ export default function OnlineCvPage() {
             'gleicher Umfang',
             'mit Ausweis',
           ],
-          link: '/kontakt?leistung=online-cv',
-          buttonText: 'CV bestellen',
+          link: '/online-cv/bestellen',
+          buttonText: 'Anfrage senden',
         },
       ]}
       includes={[
@@ -76,9 +76,9 @@ export default function OnlineCvPage() {
           answer: 'Ja, der Export ist eingebaut und sieht aus wie die Website.',
         },
       ]}
-      ctaText="In 15 Minuten bestellt, in 5 Tagen online."
-      ctaButton="CV bestellen"
-      ctaLink="/kontakt?leistung=online-cv"
+      ctaText="In 15 Minuten angefragt, in 5 Tagen erhalten Sie den ersten Entwurf."
+      ctaButton="Anfrage senden"
+      ctaLink="/online-cv/bestellen"
       path="/online-cv"
       serviceName="Online-Lebenslauf"
       servicePrice="490"

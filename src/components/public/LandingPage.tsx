@@ -275,7 +275,7 @@ export default function LandingPage({
         <div className="mx-auto max-w-[800px] px-0">
           <div className="rounded-2xl border border-[#2DD4BF]/40 bg-[#1F2937] px-6 py-10 text-center sm:px-12 sm:py-14">
             <p className="mx-auto max-w-xl text-lg leading-7 text-[#E5E7EB]">
-              {showForm ? 'Bereit zum Start? Schreiben Sie mir, ich melde mich innert 24 Stunden.' : 'Bereit zum Start? Wählen Sie Ihren Termin.'}
+              Bereit zum Start? Senden Sie mir Ihre Anfrage, ich melde mich innert 24 Stunden.
             </p>
             <div className="mt-6 flex justify-center">
               <PrimaryButton />
