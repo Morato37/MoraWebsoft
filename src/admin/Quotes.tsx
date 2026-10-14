@@ -108,8 +108,25 @@ export default function Quotes() {
   };
 
   const activeCatalog = catalog.filter(item => item.active !== false);
-  const groupedCatalog = CATALOG_CATEGORIES.map(category => ({ category, items: activeCatalog.filter(item => item.category === category) })).filter(group => group.items.length > 0);
-  const addCatalogItem = (item: CatalogItem) => updateForm('items', [...modal.form.items, { id: crypto.randomUUID(), description: `${item.name}${item.price_type === 'monat' ? ' (monatlich)' : item.price_type === 'jahr' ? ' (jährlich)' : ''}`, note: item.description, quantity: 1, unit_price: Number(item.unit_price) }]);
+  const groupedCatalog = [...new Set([...CATALOG_CATEGORIES, ...activeCatalog.map(item => item.category).filter(Boolean)])]
+    .map(category => ({ category, items: activeCatalog.filter(item => item.category === category) }))
+    .filter(group => group.items.length > 0);
+  const addCatalogItem = (item: CatalogItem) => {
+    const description = `${item.name}${item.price_type === 'monat' ? ' (monatlich)' : item.price_type === 'jahr' ? ' (jährlich)' : ''}`;
+    const existingIndex = modal.form.items.findIndex(current => current.description === description && current.unit_price === Number(item.unit_price) && current.note === item.description);
+    if (existingIndex >= 0) {
+      updateForm('items', modal.form.items.map((current, index) => index === existingIndex ? { ...current, quantity: current.quantity + 1 } : current));
+      return;
+    }
+
+    const blankIndex = modal.form.items.findIndex(current => !current.description.trim() && !current.note.trim() && current.unit_price === 0);
+    const catalogItem: QuoteItem = { id: crypto.randomUUID(), description, note: item.description, quantity: 1, unit_price: Number(item.unit_price) };
+    if (blankIndex >= 0) {
+      updateForm('items', modal.form.items.map((current, index) => index === blankIndex ? catalogItem : current));
+      return;
+    }
+    updateForm('items', [...modal.form.items, catalogItem]);
+  };
   const updateItem = (index: number, key: keyof QuoteItem, value: string | number) => updateForm('items', modal.form.items.map((item, i) => i === index ? { ...item, [key]: value } : item));
   const quoteTotals = totals(modal.form.items, Number(modal.form.discount), Number(modal.form.tax_rate));
 
@@ -128,7 +145,10 @@ export default function Quotes() {
       tax_rate: Number(modal.form.tax_rate),
       notes: modal.form.notes,
       items: modal.form.items.filter(item => item.description.trim()),
-      ...quoteTotals,
+      subtotal: quoteTotals.subtotal,
+      discount_amount: quoteTotals.discountAmount,
+      tax_amount: quoteTotals.taxAmount,
+      total: quoteTotals.total,
     };
     const result = modal.id
       ? await supabase.from('admin_quotes').update(payload).eq('id', modal.id)
