@@ -1,33 +1,40 @@
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import CountUp from '../motion/CountUp';
+import Reveal from '../motion/Reveal';
+import SectionHeading from '../motion/SectionHeading';
 
 const stats = [
-  { value: '6+ Jahre', label: 'Entwicklung' },
-  { value: '3 Jahre', label: 'IT-Leitung' },
-  { value: '7', label: 'Referenzen online' },
+  { to: 6, suffix: '+', label: 'Jahre Entwicklung' },
+  { to: 3, suffix: '', label: 'Jahre IT-Leitung' },
+  { to: 7, suffix: '', label: 'Referenzen online' },
+  { to: 24, suffix: ' h', label: 'bis zur Offerte' },
 ];
 
 export default function WhyMe() {
   return (
-    <section className="border-t border-[#374151] py-12 sm:py-20">
-      <div className="mx-auto grid max-w-[1200px] gap-10 px-6 sm:px-8 md:grid-cols-2 md:gap-16">
+    <section className="relative py-20 sm:py-28">
+      <div className="mx-auto grid max-w-[1240px] gap-12 px-6 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
         <div>
-          <h2 className="text-3xl font-bold leading-tight text-[#E5E7EB] sm:text-4xl">
-            Drei Jahre IT-Leitung in einem KMU. Ich kenne beide Seiten des Bildschirms.
-          </h2>
-          <p className="mt-6 text-base leading-7 text-[#9CA3AF]">
-            Als Entwickler baue ich seit 2019 Web-Apps und Websites. Als IT-Verantwortlicher eines 100-Personen-Betriebs habe ich Abacus, M365, Budgets und Lieferanten gesteuert. Deshalb weiss ich, welche Lösung im Alltag hält, und welche nur in der Präsentation gut aussieht.
-          </p>
-          <Link to="/ueber-mich" className="mt-6 inline-flex items-center gap-1.5 font-semibold text-[#2DD4BF] transition-colors hover:text-[#0F766E]">
-            Mehr über mich <ArrowRight size={16} />
-          </Link>
+          <SectionHeading label="Warum ich" title="Drei Jahre IT-Leitung in einem KMU. Ich kenne beide Seiten des Bildschirms." />
+          <Reveal delay={0.1}>
+            <p className="mt-6 text-base leading-8 text-[#A8B1C2]">
+              Als Entwickler baue ich seit 2019 Web-Apps und Websites. Als IT-Verantwortlicher eines 100-Personen-Betriebs habe ich Abacus, M365, Budgets und Lieferanten gesteuert. Deshalb weiss ich, welche Lösung im Alltag hält, und welche nur in der Präsentation gut aussieht.
+            </p>
+            <Link to="/ueber-mich" className="group mt-7 inline-flex items-center gap-2 font-semibold text-[#2DD4BF]">
+              Mehr über mich <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+            </Link>
+          </Reveal>
         </div>
-        <div className="flex flex-col gap-4">
-          {stats.map(stat => (
-            <div key={stat.label} className="flex items-center justify-between rounded-xl border border-[#374151] bg-[#1F2937] px-6 py-5">
-              <span className="text-2xl font-bold text-[#2DD4BF] sm:text-3xl">{stat.value}</span>
-              <span className="text-sm text-[#9CA3AF]">{stat.label}</span>
-            </div>
+        <div className="grid grid-cols-2 gap-4">
+          {stats.map((s, i) => (
+            <Reveal key={s.label} delay={i * 0.1} className="h-full">
+              <div className="group relative h-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-colors hover:border-[#2DD4BF]/40">
+                <div aria-hidden="true" className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#2DD4BF]/10 blur-2xl transition-transform duration-700 group-hover:scale-150" />
+                <p className="text-4xl font-extrabold tracking-tight text-gradient sm:text-5xl"><CountUp to={s.to} suffix={s.suffix} /></p>
+                <p className="mt-2 text-sm text-[#9CA3AF]">{s.label}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>

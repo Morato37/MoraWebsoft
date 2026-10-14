@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Check, ChevronDown, ChevronRight } from 'lucide-react';
 import LeadForm from './LeadForm';
 import Seo from './Seo';
-import { trackEvent } from '../../lib/analytics';
 
 export interface LandingPainPoint {
   icon: string;
@@ -41,7 +40,6 @@ interface LandingPageProps {
   leistung: string;
   quelle: string;
   showForm: boolean;
-  bookingUrl?: string;
   title: string;
   metaDescription: string;
   path: string;
@@ -83,26 +81,12 @@ export default function LandingPage({
   leistung,
   quelle,
   showForm,
-  bookingUrl,
   title,
   metaDescription,
   path,
   children,
 }: LandingPageProps) {
   const PrimaryButton = ({ className }: { className?: string }) => {
-    if (bookingUrl) {
-      return (
-        <a
-          href={bookingUrl}
-          target="_blank"
-          rel="noreferrer"
-          onClick={() => trackEvent('booking_click', { source: slug })}
-          className={`inline-flex justify-center rounded-lg bg-[#2DD4BF] px-6 py-3 font-semibold text-[#0B0F1A] transition-colors hover:bg-[#0F766E] hover:text-white ${className ?? ''}`}
-        >
-          {buttonText}
-        </a>
-      );
-    }
     return (
       <Link
         to="/kontakt"
@@ -124,9 +108,9 @@ export default function LandingPage({
       </a>
 
       {/* Hero */}
-      <section className="py-12 sm:py-16">
+      <section data-no-reveal className="relative py-12 sm:py-16"><div aria-hidden="true" className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(45,212,191,0.14),transparent_60%)] blur-2xl" />
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">{label}</p>
-        <h1 className="mt-5 max-w-3xl text-3xl font-bold leading-tight text-[#E5E7EB] sm:text-4xl md:text-5xl">{h1}</h1>
+        <h1 className="mt-5 max-w-3xl text-3xl font-extrabold leading-[1.08] tracking-[-0.03em] text-white sm:text-4xl md:text-5xl">{h1}</h1>
         <p className="mt-6 max-w-2xl text-base leading-7 text-[#9CA3AF] sm:text-lg">{subline}</p>
         <div className="mt-8">
           <PrimaryButton />
@@ -137,8 +121,8 @@ export default function LandingPage({
       </section>
 
       {/* Schmerzpunkte */}
-      <section className="border-t border-[#374151] py-12 sm:py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Schmerzpunkte</p>
+      <section className="border-t border-white/[0.06] py-14 sm:py-16">
+        <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Schmerzpunkte</p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {painPoints.map(pp => {
             const Icon = painIcons[pp.icon] ?? Check;
@@ -153,8 +137,8 @@ export default function LandingPage({
       </section>
 
       {/* Angebot */}
-      <section className="border-t border-[#374151] py-12 sm:py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Angebot</p>
+      <section className="border-t border-white/[0.06] py-14 sm:py-16">
+        <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Angebot</p>
         <div className="mt-8 max-w-2xl rounded-xl border border-[#2DD4BF]/60 bg-[#1F2937] p-6 sm:p-8">
           <ul className="space-y-3">
             {offerItems.map(item => (
@@ -175,8 +159,8 @@ export default function LandingPage({
       </section>
 
       {/* Screenshot / Video */}
-      <section className="border-t border-[#374151] py-12 sm:py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Vorschau</p>
+      <section className="border-t border-white/[0.06] py-14 sm:py-16">
+        <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Vorschau</p>
         <div className="mt-8 overflow-hidden rounded-xl border border-[#374151] bg-[#1F2937]">
           {youtubeId ? (
             <div className="aspect-video w-full">
@@ -214,16 +198,16 @@ export default function LandingPage({
       </section>
 
       {/* Rechenbeispiel */}
-      <section className="border-t border-[#374151] py-12 sm:py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Rechenbeispiel</p>
+      <section className="border-t border-white/[0.06] py-14 sm:py-16">
+        <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Rechenbeispiel</p>
         <div className="mt-6 max-w-2xl rounded-xl border border-[#374151] bg-[#1F2937] p-6">
           <p className="font-mono text-sm leading-7 text-[#E5E7EB]">{exampleText}</p>
         </div>
       </section>
 
       {/* Referenz */}
-      <section className="border-t border-[#374151] py-12 sm:py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Referenz</p>
+      <section className="border-t border-white/[0.06] py-14 sm:py-16">
+        <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Referenz</p>
         <figure className="mt-8 max-w-2xl rounded-xl border border-[#374151] bg-[#1F2937] p-6 sm:p-8">
           <blockquote className="text-lg leading-8 text-[#E5E7EB]">«{testimonial.quote}»</blockquote>
           <figcaption className="mt-5 text-sm text-[#9CA3AF]">
@@ -235,8 +219,8 @@ export default function LandingPage({
       </section>
 
       {/* Über mich */}
-      <section className="border-t border-[#374151] py-12 sm:py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Über mich</p>
+      <section className="border-t border-white/[0.06] py-14 sm:py-16">
+        <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Über mich</p>
         <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
           <div className="shrink-0">
             <div className="overflow-hidden rounded-xl border border-[#374151] bg-[#1F2937]">
@@ -269,8 +253,8 @@ export default function LandingPage({
       </section>
 
       {/* FAQ */}
-      <section className="border-t border-[#374151] py-12 sm:py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Fragen</p>
+      <section className="border-t border-white/[0.06] py-14 sm:py-16">
+        <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Fragen</p>
         <div className="mt-8 max-w-3xl space-y-3">
           {faq.map(item => (
             <details key={item.question} className="group rounded-xl border border-[#374151] bg-[#1F2937]">
@@ -287,7 +271,7 @@ export default function LandingPage({
       {children}
 
       {/* Abschluss + Formular / Booking */}
-      <section className="border-t border-[#374151] py-12 sm:py-16">
+      <section className="border-t border-white/[0.06] py-14 sm:py-16">
         <div className="mx-auto max-w-[800px] px-0">
           <div className="rounded-2xl border border-[#2DD4BF]/40 bg-[#1F2937] px-6 py-10 text-center sm:px-12 sm:py-14">
             <p className="mx-auto max-w-xl text-lg leading-7 text-[#E5E7EB]">
@@ -300,7 +284,7 @@ export default function LandingPage({
 
           {showForm && (
             <div className="mt-10">
-              <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Formular</p>
+              <p className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.25em] text-[#2DD4BF]"><span className="h-px w-8 bg-[#2DD4BF]/60" aria-hidden="true" />Formular</p>
               <LeadForm leistung={leistung} quelle={quelle} />
             </div>
           )}

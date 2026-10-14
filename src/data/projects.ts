@@ -9,6 +9,8 @@ export interface Project {
   projectTags: ProjectTag[];
   url?: string;
   image: string;
+  /** Live-Screenshot als Fallback, falls das lokale Bild fehlt */
+  screenshot?: string;
   nda?: boolean;
 }
 
@@ -21,7 +23,7 @@ export const projects: Project[] = [
     tags: ['React', 'Tailwind', 'Vite'],
     projectTags: ['webdesign'],
     url: 'https://schweizer-sammelkartenmesse.ch/',
-    image: 'https://image.thum.io/get/width/1200/https://schweizer-sammelkartenmesse.ch/',
+    image: '/images/ref-sammelkartenmesse.jpg',
   },
   {
     id: 'landschaftsarchitekt',
@@ -31,7 +33,7 @@ export const projects: Project[] = [
     tags: ['React', 'Framer Motion', 'Vite'],
     projectTags: ['webdesign'],
     url: 'https://interactive-landscap-hz71.bolt.host/',
-    image: 'https://image.thum.io/get/width/1200/https://interactive-landscap-hz71.bolt.host/',
+    image: '/images/ref-landschaftsarchitekt.jpg',
   },
   {
     id: 'hotelplan',
@@ -40,7 +42,7 @@ export const projects: Project[] = [
     description: 'Mobile Android-App für Messeeinsätze, inklusive Datenauswertung und Lead-Generierung.',
     tags: ['Android', 'Kotlin', 'Firebase'],
     projectTags: ['webengineering'],
-    image: '/images/ref-hotelplan.jpg',
+    image: '/images/ref-hotelplan.svg',
   },
   {
     id: 'b2b',
@@ -49,7 +51,7 @@ export const projects: Project[] = [
     description: 'Firmeninterne Webapplikationen zur Prozessoptimierung. Unter Verschluss.',
     tags: ['React', 'Node.js', 'Supabase'],
     projectTags: ['webengineering', 'schnittstellen'],
-    image: '/images/ref-b2b.jpg',
+    image: '/images/ref-b2b.svg',
     nda: true,
   },
   {
@@ -60,7 +62,7 @@ export const projects: Project[] = [
     tags: ['Next.js', 'Stripe', 'Supabase'],
     projectTags: ['webdesign', 'schnittstellen'],
     url: 'https://kaleidoscopic-kitten-e2ec36.netlify.app/',
-    image: 'https://image.thum.io/get/width/1200/https://kaleidoscopic-kitten-e2ec36.netlify.app/',
+    image: '/images/ref-shop.jpg',
   },
   {
     id: 'it-dienstleister',
@@ -70,7 +72,7 @@ export const projects: Project[] = [
     tags: ['React', 'Tailwind', 'Supabase'],
     projectTags: ['webdesign', 'webengineering'],
     url: 'https://it-company.bolt.host/',
-    image: 'https://image.thum.io/get/width/1200/https://it-company.bolt.host/',
+    image: '/images/ref-it-dienstleister.jpg',
   },
   {
     id: 'cv',
@@ -80,6 +82,6 @@ export const projects: Project[] = [
     tags: ['React', 'Framer Motion', 'Tailwind'],
     projectTags: ['online-cv'],
     url: 'https://it-professional-port-0nre.bolt.host/',
-    image: 'https://image.thum.io/get/width/1200/https://it-professional-port-0nre.bolt.host/',
+    image: '/images/ref-cv.jpg',
   },
 ];

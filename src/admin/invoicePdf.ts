@@ -1,4 +1,4 @@
-import { Invoice, InvoiceItem } from './types';
+import type { Invoice, InvoiceItem } from './types';
 
 function formatCHF(val: number) {
   return `CHF ${val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;

@@ -1,14 +1,21 @@
 import { useEffect } from 'react';
-import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { createBrowserRouter, createHashRouter, Navigate, Outlet } from 'react-router-dom';
 import AdminApp from './admin/AdminApp';
 import PublicFooter from './components/layout/PublicFooter';
 import PublicHeader from './components/layout/PublicHeader';
+import CursorGlow from './components/motion/CursorGlow';
+import PageTransition from './components/motion/PageTransition';
+import ScrollProgress from './components/motion/ScrollProgress';
+import Preloader from './components/motion/Preloader';
+import SmoothScroll from './components/motion/SmoothScroll';
+import useSectionReveal from './components/motion/useSectionReveal';
 import AutomatisierungPage from './pages/AutomatisierungPage';
 import DatenschutzPage from './pages/DatenschutzPage';
 import HomePage from './pages/HomePage';
 import ImpressumPage from './pages/ImpressumPage';
 import KontaktPage from './pages/KontaktPage';
 import OnlineCvPage from './pages/OnlineCvPage';
+import CvBestellenPage from './pages/CvBestellenPage';
 import SchnittstellenPage from './pages/SchnittstellenPage';
 import UeberMichPage from './pages/UeberMichPage';
 import WebdesignPage from './pages/WebdesignPage';
@@ -19,23 +26,17 @@ import OffertformularErpPage from './pages/landing/OffertformularErpPage';
 import ProzessCheckPage from './pages/landing/ProzessCheckPage';
 import ShopAbacusPage from './pages/landing/ShopAbacusPage';
 
-function ScrollToTop() {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [pathname]);
-
-  return null;
-}
-
 function PublicLayout() {
+  useSectionReveal();
   return (
-    <div className="public min-h-screen bg-[#0B0F1A] text-[#E5E7EB]">
-      <ScrollToTop />
+    <div className="public relative min-h-screen bg-[#070b14] text-[#E5E7EB]">
+      <Preloader />
+      <SmoothScroll />
+      <ScrollProgress />
+      <CursorGlow />
       <PublicHeader />
-      <main className="min-h-[calc(100vh-160px)]">
-        <Outlet />
+      <main className="relative z-10 min-h-[calc(100vh-160px)] pt-20 sm:pt-24">
+        <PageTransition><Outlet /></PageTransition>
       </main>
       <PublicFooter />
     </div>
@@ -43,10 +44,13 @@ function PublicLayout() {
 }
 
 function LandingLayout() {
+  useSectionReveal();
   return (
-    <div className="public min-h-screen bg-[#0B0F1A] text-[#E5E7EB]">
-      <ScrollToTop />
-      <div className="mx-auto flex min-h-screen max-w-[1200px] flex-col px-6 sm:px-8">
+    <div className="public relative min-h-screen bg-[#070b14] text-[#E5E7EB]">
+      <SmoothScroll />
+      <ScrollProgress />
+      <CursorGlow />
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-[1200px] flex-col px-6 sm:px-8">
         <a href="/" className="flex items-center gap-3 py-7 text-lg font-bold tracking-tight text-[#E5E7EB]" aria-label="Morawebsoft Startseite">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#2DD4BF]/40 text-[#2DD4BF]">M</span>
           Morawebsoft
@@ -81,7 +85,9 @@ function AdminRoute() {
   return <AdminApp />;
 }
 
-export const router = createBrowserRouter([
+const createRouter = import.meta.env.VITE_PREVIEW_HASH_ROUTER === '1' ? createHashRouter : createBrowserRouter;
+
+export const router = createRouter([
   {
     element: <PublicLayout />,
     children: [
@@ -91,6 +97,7 @@ export const router = createBrowserRouter([
       { path: '/automatisierung', element: <AutomatisierungPage /> },
       { path: '/schnittstellen', element: <SchnittstellenPage /> },
       { path: '/online-cv', element: <OnlineCvPage /> },
+      { path: '/online-cv/bestellen', element: <CvBestellenPage /> },
       { path: '/ueber-mich', element: <UeberMichPage /> },
       { path: '/kontakt', element: <KontaktPage /> },
       { path: '/impressum', element: <ImpressumPage /> },

@@ -1,7 +1,5 @@
 import LandingPage from '../../components/public/LandingPage';
 
-const BOOKING_URL_PROZESSCHECK = import.meta.env.VITE_BOOKING_URL_PROZESSCHECK ?? 'https://cal.com/morawebsoft';
-
 export default function ProzessCheckPage() {
   return (
     <LandingPage
@@ -42,7 +40,6 @@ export default function ProzessCheckPage() {
       leistung="Automatisierung"
       quelle="landingpage-prozess-check"
       showForm={false}
-      bookingUrl={BOOKING_URL_PROZESSCHECK}
       title="Prozess-Check: welche drei Prozesse Sie zuerst automatisieren sollten | Morawebsoft"
       metaDescription="Video-Call mit Bildschirmfreigabe. Sie zeigen mir Ihren Alltag, ich notiere, wo Zeit verloren geht. Drei Tage später haben Sie einen Bericht mit Aufwand, Nutzen und Festpreis je Massnahme."
       path="/prozess-check"

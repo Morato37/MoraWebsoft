@@ -28,7 +28,7 @@ export default function AutomatisierungPage() {
             'Betrag wird bei Auftrag angerechnet',
           ],
           link: '/prozess-check',
-          buttonText: 'Prozess-Check buchen',
+          buttonText: 'Prozess-Check anfragen',
         },
       ]}
       miniProducts={[
@@ -64,7 +64,7 @@ export default function AutomatisierungPage() {
         },
       ]}
       ctaText="In zwei Stunden wissen Sie, welche drei Prozesse Sie zuerst automatisieren sollten."
-      ctaButton="Prozess-Check buchen"
+      ctaButton="Prozess-Check anfragen"
       ctaLink="/prozess-check"
       path="/automatisierung"
       serviceName="Prozessautomatisierung"

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Mail, Phone, MapPin, Linkedin, ChevronDown } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 
