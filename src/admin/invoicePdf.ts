@@ -76,12 +76,6 @@ export function generateInvoiceHtml(invoice: Invoice, items: InvoiceItem[], asse
       <div style="font-size: 20px; font-weight: 700; color: #0891b2; margin-bottom: 4px;">${invoice.invoice_number}</div>
       <div>Ausgestellt: ${formatDate(invoice.issue_date)}</div>
       <div>Fällig: ${formatDate(invoice.due_date)}</div>
-      <div style="margin-top: 8px; padding: 4px 10px; border-radius: 6px; display: inline-block; font-size: 11px; font-weight: 700;
-        ${invoice.status === 'bezahlt' ? 'background: rgba(16,185,129,0.12); color: #059669; border: 1px solid rgba(16,185,129,0.3);' :
-          invoice.status === 'offen' ? 'background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.25);' :
-          invoice.status === 'überfällig' ? 'background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.25);' :
-          'background: rgba(100,116,139,0.1); color: #64748b; border: 1px solid rgba(100,116,139,0.2);'
-        }">${invoice.status.toUpperCase()}</div>
     </div>
   </div>
 

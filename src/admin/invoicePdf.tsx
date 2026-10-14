@@ -14,15 +14,6 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('de-CH', { day: 'numeric', month: 'numeric', year: 'numeric' });
 }
 
-function getStatusColor(status: string): [number, number, number] {
-  switch (status) {
-    case 'bezahlt':   return [16, 185, 129];
-    case 'offen':     return [245, 158, 11];
-    case 'überfällig': return [239, 68, 68];
-    default:          return [156, 163, 175];
-  }
-}
-
 async function generateQR(text: string): Promise<string> {
   return QRCode.toDataURL(text, {
     width: 160,
@@ -80,16 +71,6 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   doc.setTextColor(...BRAND.muted);
   doc.text(`Ausgestellt: ${formatDate(invoice.issue_date)}`, W - margin, 27, { align: 'right' });
   doc.text(`Fällig: ${formatDate(invoice.due_date)}`, W - margin, 33, { align: 'right' });
-
-  const statusColor = getStatusColor(invoice.status);
-  const statusText = invoice.status.toUpperCase();
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  const statusW = doc.getTextWidth(statusText) + 6;
-  doc.setFillColor(...statusColor);
-  doc.roundedRect(W - margin - statusW, 36, statusW, 6, 1.5, 1.5, 'F');
-  doc.setTextColor(...BRAND.white);
-  doc.text(statusText, W - margin - statusW / 2, 40.5, { align: 'center' });
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(28);
