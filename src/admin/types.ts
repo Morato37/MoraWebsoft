@@ -31,10 +31,14 @@ export interface InvoiceItem {
 
 export interface CatalogItem {
   id: string;
+  key: string | null;
   name: string;
   description: string;
   category: string;
   unit_price: number;
+  price_type: import('./catalog').CatalogPriceType;
+  sort_order: number;
+  active: boolean;
   created_at: string;
 }
 
