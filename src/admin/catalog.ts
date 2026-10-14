@@ -11,14 +11,14 @@ export interface DefaultCatalogItem {
   active: boolean;
 }
 
-export const CATALOG_VERSION = 2;
+export const CATALOG_VERSION = 3;
 
 export const CATALOG_CATEGORIES = [
   'Website', 'Onlineshop', 'Webengineering', 'Automatisierung', 'Schnittstellen',
   'Online-CV', 'Betreuung', 'Hosting & Domain', 'Design & Inhalte', 'Stundensätze',
 ] as const;
 
-export const DEFAULT_CATALOG: DefaultCatalogItem[] = [
+const BASE_CATALOG: DefaultCatalogItem[] = [
   { key: 'web-start', name: 'Website Start', unit_price: 2900, price_type: 'fix', sort_order: 10, category: 'Website', active: true, description: 'One-Pager oder bis 5 Seiten, responsive für Handy, Tablet und Desktop. Kontakt- oder Offertformular mit Spam-Schutz und Bestätigungsmail. Google Business Profile eingerichtet und verknüpft. Impressum und Datenschutzerklärung nach revDSG, SSL-Zertifikat, Ladezeit unter 2 Sekunden. SEO-Grundlagen: Seitentitel, Beschreibungen, Sitemap, Anmeldung bei Google. 1 Korrekturrunde, Schulung per Video. Online in 3 Wochen ab Erhalt der Inhalte (Logo, Texte oder Stichworte, Fotos).' },
   { key: 'web-start-gruender', name: 'Website Start (Gründer-Angebot)', unit_price: 2400, price_type: 'fix', sort_order: 11, category: 'Website', active: true, description: 'Gleicher Umfang wie Website Start, für Firmen im ersten Jahr nach der Gründung (Handelsregister-Eintrag).' },
   { key: 'web-business', name: 'Website Business', unit_price: 5900, price_type: 'ab', sort_order: 20, category: 'Website', active: true, description: 'Bis 10 Seiten, im Admin selbst bearbeitbar (Texte, Bilder, Seiten). Blog oder News-Bereich, Referenz- oder Projektgalerie. SEO-Grundlagen inklusive strukturierter Daten und Bildoptimierung. Kontakt- oder Offertformular mit Bestätigungsmail, Google Business Profile, Impressum und Datenschutz nach revDSG, SSL. 2 Korrekturrunden, Schulung per Video (aufgezeichnet). Online in 5 Wochen ab Freigabe der Inhalte. Richtpreis CHF 5\'900–8\'500 je nach Umfang.' },
@@ -57,6 +57,24 @@ export const DEFAULT_CATALOG: DefaultCatalogItem[] = [
   { key: 'std-entwicklung', name: 'Entwicklung / Beratung', unit_price: 140, price_type: 'stunde', sort_order: 10, category: 'Stundensätze', active: true, description: 'Entwicklung, Beratung und Projektarbeit nach Aufwand, Abrechnung in 15-Minuten-Schritten.' },
   { key: 'std-schulung', name: 'Schulung', unit_price: 140, price_type: 'stunde', sort_order: 20, category: 'Stundensätze', active: true, description: 'Schulung per Video oder vor Ort, auf Wunsch aufgezeichnet. Vor Ort im Zürcher Oberland ohne Reisekosten.' },
 ];
+
+const CATEGORY_DETAILS: Record<string, string> = {
+  Website: 'Enthalten sind eine kurze gemeinsame Klärung der Ziele, die responsive Umsetzung für alle Bildschirmgrössen sowie eine verständliche Übergabe nach der Veröffentlichung.',
+  Onlineshop: 'Dabei werden die wichtigsten Abläufe von Produktpflege bis Bestellung berücksichtigt und die Lösung so aufgebaut, dass sie später sauber erweitert werden kann.',
+  Webengineering: 'Die Umsetzung erfolgt nachvollziehbar, wartbar und mit sauberer Trennung der wichtigsten Funktionen. Vor der Übergabe werden die zentralen Abläufe gemeinsam geprüft.',
+  Automatisierung: 'Vor der Umsetzung werden die betroffenen Abläufe und Ausnahmen abgestimmt. Nach dem Test erhalten Sie eine kurze Dokumentation für den laufenden Betrieb.',
+  Schnittstellen: 'Datenfelder, Fehlerfälle und Zuständigkeiten werden vorab geklärt. Die Verbindung wird mit realistischen Beispieldaten getestet und nachvollziehbar dokumentiert.',
+  'Online-CV': 'Das Ergebnis ist für Mobilgeräte optimiert, leicht zu aktualisieren und auf einen professionellen Auftritt bei Bewerbungen, Kundenkontakten und Netzwerkgesprächen ausgelegt.',
+  Betreuung: 'Die Leistungen werden transparent abgestimmt und nachvollziehbar dokumentiert. Nicht genutzte Zeit wird nicht stillschweigend durch zusätzliche Arbeiten ersetzt.',
+  'Hosting & Domain': 'Die Einrichtung wird sauber dokumentiert, damit Zuständigkeiten, Laufzeiten und wichtige Zugangsinformationen auch später klar nachvollziehbar bleiben.',
+  'Design & Inhalte': 'Die Inhalte werden auf Zielgruppe, Angebot und gewünschte Wirkung abgestimmt. Änderungen und Freigaben erfolgen in klaren, überschaubaren Schritten.',
+  Stundensätze: 'Die Arbeit wird transparent in 15-Minuten-Schritten erfasst. Sie erhalten auf Wunsch eine kurze Zusammenfassung der erledigten Arbeiten und der nächsten sinnvollen Schritte.',
+};
+
+export const DEFAULT_CATALOG: DefaultCatalogItem[] = BASE_CATALOG.map(item => ({
+  ...item,
+  description: `${item.description} ${CATEGORY_DETAILS[item.category]}`,
+}));
 
 export function formatCatalogPrice(item: Pick<DefaultCatalogItem, 'unit_price' | 'price_type'>): string {
   const amount = `CHF ${String(item.unit_price).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
