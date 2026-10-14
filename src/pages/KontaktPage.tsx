@@ -50,6 +50,14 @@ export default function KontaktPage() {
     setError('');
 
     if (honeypot) return;
+    if (!name.trim() || !email.trim() || !nachricht.trim()) {
+      setError('Bitte füllen Sie Name, E-Mail und Nachricht aus.');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+      return;
+    }
     if (!datenschutz) {
       setError('Bitte bestätigen Sie die Datenschutzerklärung.');
       return;
@@ -65,6 +73,8 @@ export default function KontaktPage() {
       leistung,
       nachricht,
       quelle: 'kontaktformular',
+      status: 'neu',
+      notizen: '',
     };
 
     const web3formsKey = import.meta.env.VITE_WEB3FORMS_KEY as string | undefined;
@@ -190,7 +200,7 @@ export default function KontaktPage() {
       <section className="border-t border-[#374151] py-12 sm:py-20">
         <div className="mx-auto max-w-[1200px] px-6 sm:px-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#2DD4BF]">// Formular</p>
-          <form onSubmit={handleSubmit} className="mt-8 max-w-3xl space-y-5">
+          <form onSubmit={handleSubmit} noValidate className="mt-8 max-w-3xl space-y-5">
             {/* Honeypot */}
             <input
               type="text"
@@ -318,11 +328,6 @@ export default function KontaktPage() {
               type="submit"
               disabled={submitting}
               aria-busy={submitting}
-              onClick={() => {
-                if (!name.trim() || !email.trim() || !nachricht.trim()) {
-                  setError('Bitte füllen Sie Name, E-Mail und Nachricht aus.');
-                }
-              }}
               className="rounded-lg bg-[#2DD4BF] px-6 py-3 font-semibold text-[#0B0F1A] transition-colors hover:bg-[#0F766E] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Wird gesendet…' : 'Anfrage senden'}
