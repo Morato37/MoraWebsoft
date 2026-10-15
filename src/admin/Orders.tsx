@@ -135,11 +135,15 @@ export default function Orders() {
                   <p className="text-white/35 text-xs font-mono truncate">
                     {(o.admin_customers as any)?.name || '—'} · {new Date(o.order_date).toLocaleDateString('de-CH')}
                   </p>
-                  {o.quote_id && <p className="text-cyan-400/50 text-[10px] font-mono mt-0.5">Aus Offerte erstellt</p>}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {o.quote_id && <span className="text-cyan-400/50 text-[10px] font-mono">Aus Offerte</span>}
+                    {o.items && o.items.length > 0 && <span className="text-white/25 text-[10px] font-mono">{o.items.length} Pos.</span>}
+                    {Number(o.total) > 0 && <span className="text-cyan-400/60 text-[10px] font-mono font-bold">CHF {Number(o.total).toFixed(2)}</span>}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`px-2.5 py-1 rounded-lg text-xs font-mono border ${STATUS_COLORS[o.status] ?? 'text-white/40 bg-white/4 border-white/10'}`}>
+                <span className={`hidden md:inline-block px-2.5 py-1 rounded-lg text-xs font-mono border ${STATUS_COLORS[o.status] ?? 'text-white/40 bg-white/4 border-white/10'}`}>
                   {o.status}
                 </span>
                 {o.status !== 'abgeschlossen' && o.status !== 'storniert' && (

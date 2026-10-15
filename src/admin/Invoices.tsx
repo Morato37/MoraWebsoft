@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Customer, Invoice, Order } from './types';
 import { Plus, Pencil, Trash2, X, Check, FileText, Download, Trash, CalendarClock } from 'lucide-react';
-import { openInvoicePdf } from './invoicePdf';
+import { openInvoicePdf } from './invoicePdf.tsx';
 
 const STATUS_OPTIONS = ['entwurf', 'offen', 'bezahlt', 'überfällig', 'storniert'];
 const STATUS_COLORS: Record<string, string> = {

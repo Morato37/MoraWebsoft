@@ -9,6 +9,14 @@ export interface Customer {
   created_at: string;
 }
 
+export interface OrderItem {
+  id: string;
+  description: string;
+  note: string;
+  quantity: number;
+  unit_price: number;
+}
+
 export interface Order {
   id: string;
   customer_id: string;
@@ -17,8 +25,17 @@ export interface Order {
   order_date: string;
   notes: string;
   quote_id: string | null;
+  items: OrderItem[];
+  subtotal: number;
+  discount: number;
+  discount_amount: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  payment_terms: string;
+  valid_until: string | null;
   created_at: string;
-  admin_customers?: { name: string; company: string };
+  admin_customers?: { name: string; company: string; email?: string; address?: string; phone?: string };
 }
 
 export interface InvoiceItem {

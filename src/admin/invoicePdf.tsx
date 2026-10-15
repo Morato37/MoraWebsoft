@@ -14,6 +14,10 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('de-CH', { day: 'numeric', month: 'numeric', year: 'numeric' });
 }
 
+function formatCHF(value: number): string {
+  return `CHF ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
+}
+
 async function generateQR(text: string, width = 160): Promise<string> {
   return QRCode.toDataURL(text, {
     width,

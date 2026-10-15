@@ -171,18 +171,32 @@ export default function Quotes() {
     setConverting(quote.id);
     const orderResult = await supabase.from('admin_orders').insert({
       customer_id: quote.customer_id,
-      title: `${quote.title} (aus ${quote.quote_number})`,
+      title: quote.title,
       status: 'offen',
       order_date: new Date().toISOString().slice(0, 10),
-      notes: `Automatisch aus Offerte ${quote.quote_number} erstellt.\n\n${quote.notes ?? ''}`.trim(),
+      notes: quote.notes ?? '',
       quote_id: quote.id,
+      items: (quote.items ?? []).map(item => ({
+        id: crypto.randomUUID(),
+        description: item.description,
+        note: item.note,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+      })),
+      subtotal: Number(quote.subtotal),
+      discount: Number(quote.discount),
+      discount_amount: Number(quote.discount_amount),
+      tax_rate: Number(quote.tax_rate),
+      tax_amount: Number(quote.tax_amount),
+      total: Number(quote.total),
+      payment_terms: quote.payment_terms,
+      valid_until: quote.valid_until,
     }).select('id').maybeSingle();
     if (orderResult.error || !orderResult.data) {
       setError('Der Auftrag konnte nicht aus der Offerte erstellt werden.');
       setConverting(null);
       return;
     }
-    await supabase.from('admin_quotes').update({ status: 'angenommen' }).eq('id', quote.id);
     setError('');
     setConverting(null);
     load();
