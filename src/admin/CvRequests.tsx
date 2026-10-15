@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, FileText, RefreshCw } from 'lucide-react';
+import { Download, FileText, RefreshCw, FileCheck, Receipt } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface UploadedFile {
@@ -30,11 +30,18 @@ const statusStyles: Record<string, string> = {
   abgeschlossen: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300',
 };
 
+const PAKET_PREISE: Record<string, { description: string; unit_price: number }> = {
+  student: { description: 'Digitales CV (Lernende und Studierende)', unit_price: 290 },
+  standard: { description: 'Digitales CV', unit_price: 490 },
+};
+
 export default function CvRequests() {
   const [requests, setRequests] = useState<CvRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [opening, setOpening] = useState<string | null>(null);
+  const [processing, setProcessing] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -65,6 +72,105 @@ export default function CvRequests() {
     window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
   };
 
+  const findOrCreateCustomer = async (req: CvRequest): Promise<string | null> => {
+    const fullName = `${req.vorname} ${req.nachname}`.trim();
+    const { data: existing } = await supabase
+      .from('admin_customers')
+      .select('id')
+      .eq('email', req.email)
+      .maybeSingle();
+    if (existing?.id) return existing.id;
+
+    const { data: created, error: insertError } = await supabase
+      .from('admin_customers')
+      .insert({ name: fullName, email: req.email, notes: `Online-CV Anfrage. Beruf: ${req.beruf}. Ziel: ${req.zielposition}.` })
+      .select('id')
+      .maybeSingle();
+    if (insertError || !created?.id) return null;
+    return created.id;
+  };
+
+  const createOrderAndInvoice = async (req: CvRequest, what: 'order' | 'invoice') => {
+    if (processing) return;
+    setProcessing(`${req.id}-${what}`);
+    setSuccessMsg('');
+    setError('');
+
+    try {
+      const customerId = await findOrCreateCustomer(req);
+      if (!customerId) {
+        setError('Der Kunde konnte nicht erstellt werden.');
+        return;
+      }
+
+      const fullName = `${req.vorname} ${req.nachname}`.trim();
+      const paket = PAKET_PREISE[req.paket] ?? PAKET_PREISE.standard;
+      const subtotal = paket.unit_price;
+      const taxRate = 8.1;
+      const taxAmount = subtotal * (taxRate / 100);
+      const total = subtotal + taxAmount;
+      const today = new Date().toISOString().slice(0, 10);
+
+      const { data: orderResult } = await supabase.from('admin_orders').insert({
+        customer_id: customerId,
+        title: `Online-CV ${fullName}`,
+        status: 'offen',
+        order_date: today,
+        notes: `Paket: ${paket.description}. Domain: ${req.wunschdomain || '—'}. Design: ${req.design}.`,
+      }).select('id').maybeSingle();
+
+      const orderId = orderResult?.id ?? null;
+
+      if (orderId) {
+        await supabase.from('admin_order_items').insert({
+          order_id: orderId,
+          description: paket.description,
+          quantity: 1,
+          unit_price: paket.unit_price,
+        });
+        await supabase.from('admin_orders').update({ subtotal, tax_rate: taxRate, tax_amount: taxAmount, total }).eq('id', orderId);
+      }
+
+      if (what === 'invoice') {
+        const { count } = await supabase.from('admin_invoices').select('*', { count: 'exact', head: true });
+        const invoiceNumber = `RE-${new Date().getFullYear()}-${String((count ?? 0) + 1).padStart(3, '0')}`;
+
+        const { data: invResult } = await supabase.from('admin_invoices').insert({
+          invoice_number: invoiceNumber,
+          customer_id: customerId,
+          order_id: orderId,
+          status: 'offen',
+          issue_date: today,
+          due_date: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+          subtotal,
+          tax_rate: taxRate,
+          tax_amount: taxAmount,
+          total,
+          notes: `Online-CV ${fullName}. Domain: ${req.wunschdomain || '—'}.`,
+        }).select('id').maybeSingle();
+
+        if (invResult?.id) {
+          await supabase.from('admin_invoice_items').insert({
+            invoice_id: invResult.id,
+            description: paket.description,
+            quantity: 1,
+            unit_price: paket.unit_price,
+          });
+        }
+      }
+
+      await supabase.from('admin_cv_requests').update({ status: 'in_bearbeitung' }).eq('id', req.id);
+      setSuccessMsg(what === 'invoice'
+        ? `Auftrag und Rechnung für ${fullName} wurden erstellt.`
+        : `Auftragsbestätigung für ${fullName} wurde erstellt.`);
+      load();
+    } catch {
+      setError('Es ist ein Fehler aufgetreten.');
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between gap-4">
@@ -78,6 +184,7 @@ export default function CvRequests() {
       </div>
 
       {error && <p className="mb-4 rounded-lg border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300">{error}</p>}
+      {successMsg && <p className="mb-4 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-300">{successMsg}</p>}
       {loading ? (
         <div className="text-sm font-mono text-white/30">Laden...</div>
       ) : requests.length === 0 ? (
@@ -104,6 +211,22 @@ export default function CvRequests() {
                 <span>Domain: <strong className="font-normal text-white/75">{request.wunschdomain || '—'}</strong></span>
                 <span>Design: <strong className="font-normal text-white/75">{request.design}</strong></span>
                 <span className="flex flex-wrap gap-2">{request.dateien.map(file => <button key={file.path} onClick={() => openFile(file)} disabled={opening === file.path} className="inline-flex items-center gap-1 rounded-md border border-cyan-400/20 px-2 py-1 text-cyan-300 transition-colors hover:bg-cyan-400/10 disabled:opacity-50"><FileText size={12} />{opening === file.path ? 'Öffne...' : file.name}<Download size={11} /></button>)}</span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => createOrderAndInvoice(request, 'order')}
+                  disabled={processing === `${request.id}-order`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-mono text-cyan-300 transition-colors hover:bg-cyan-400/20 hover:border-cyan-400/40 disabled:opacity-50"
+                >
+                  <FileCheck size={13} /> {processing === `${request.id}-order` ? '...' : 'Auftragsbestätigung'}
+                </button>
+                <button
+                  onClick={() => createOrderAndInvoice(request, 'invoice')}
+                  disabled={processing === `${request.id}-invoice`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-mono text-emerald-300 transition-colors hover:bg-emerald-400/20 hover:border-emerald-400/40 disabled:opacity-50"
+                >
+                  <Receipt size={13} /> {processing === `${request.id}-invoice` ? '...' : 'Rechnung'}
+                </button>
               </div>
             </article>
           ))}
