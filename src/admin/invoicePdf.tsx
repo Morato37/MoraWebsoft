@@ -305,12 +305,6 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
 
   if (swissQr) {
     doc.addImage(swissQr, 'PNG', 94, 38, 58, 58);
-    doc.setFillColor(255, 255, 255);
-    doc.rect(118, 62, 10, 10, 'F');
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(1.8);
-    doc.line(120, 67, 126, 67);
-    doc.line(123, 64, 123, 70);
   }
 
   const infoX = 158;
