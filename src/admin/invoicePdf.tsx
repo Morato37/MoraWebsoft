@@ -44,20 +44,6 @@ function buildSwissQrPayload(invoice: Invoice): string {
   ].join('\n');
 }
 
-async function loadLogo(): Promise<string | null> {
-  try {
-    const res = await fetch('/favicon.svg');
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch { return null; }
-}
-
 export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Promise<void> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   const W = 210;
@@ -67,22 +53,17 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   const ETH_ADDR = '0x444920D5A72F2CA91E876781e3302549eF8926cB';
   const SOL_ADDR = 'DGR7BisMWvG3aXshFRLVq2H8mjSCDrfJCGxnu1PdgK2F';
 
-  const [logoData, ethQr, solQr, swissQr] = await Promise.all([
-    loadLogo(),
+  const [ethQr, solQr, swissQr] = await Promise.all([
     generateQR(`ethereum:${ETH_ADDR}`),
     generateQR(`solana:${SOL_ADDR}`),
     generateQR(buildSwissQrPayload(invoice), 520),
-  ]) as [string | null, string | null, string | null, string | null];
+  ]) as [string | null, string | null, string | null];
 
   // ── HEADER ──────────────────────────────────────────────────────────────
-  if (logoData) {
-    doc.addImage(logoData, 'PNG', margin, 14, 32, 12);
-  } else {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(...BRAND.cyan);
-    doc.text('MoraWebsoft', margin, 22);
-  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.cyan);
+  doc.text('MoraWebsoft', margin, 22);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
