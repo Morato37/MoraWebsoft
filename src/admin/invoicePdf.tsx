@@ -261,9 +261,15 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   const referencePrinted = qrLines[28].replace(/(.{4})/g, '$1 ').trim();
   const customer = invoice.admin_customers;
   const customerName = customer?.company || customer?.name || '';
-  const customerAddress = customer?.street ? `${customer.street}${customer.house_number ? ` ${customer.house_number}` : ''}` : '';
-  const customerTown = customer?.postal_code && customer?.town ? `${customer.postal_code} ${customer.town}` : '';
-  const hasCustomerAddress = Boolean(customerName && customer?.postal_code && customer?.town && customer?.country);
+  const customerStreetLine = customer?.street
+    ? `${customer.street}${customer.house_number ? ` ${customer.house_number}` : ''}`
+    : (customer?.address || '');
+  const customerTownLine = customer?.postal_code && customer?.town
+    ? `${customer.postal_code} ${customer.town}`
+    : (!customer?.street && customer?.address ? '' : '');
+
+  const hasAnyCustomerInfo = Boolean(customerName || customerStreetLine || customerTownLine);
+  const printedPayerLines = [customerName, customerStreetLine, customerTownLine].filter(Boolean);
   const paymentX = 67;
   const detailsX = 118;
   const detailsWidth = 87;
@@ -296,8 +302,8 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
 
   textBlock('Konto / Zahlbar an', [ibanPrinted, CREDITOR.name, `${CREDITOR.street} ${CREDITOR.houseNumber}`, `${CREDITOR.postalCode} ${CREDITOR.town}`], receiptX, 204, receiptWidth, 8);
   textBlock('Referenz', [referencePrinted], receiptX, 229, receiptWidth, 8);
-  if (hasCustomerAddress) {
-    textBlock('Zahlbar durch', [customerName, customerAddress, customerTown], receiptX, 242, receiptWidth, 8);
+  if (hasAnyCustomerInfo) {
+    textBlock('Zahlbar durch', printedPayerLines, receiptX, 242, receiptWidth, 8);
   } else {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(6); doc.text('Zahlbar durch (Name/Adresse)', receiptX, 242);
     drawCornerField(receiptX, 246, receiptWidth, 20);
@@ -312,20 +318,33 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   textBlock('Konto / Zahlbar an', [ibanPrinted, CREDITOR.name, `${CREDITOR.street} ${CREDITOR.houseNumber}`, `${CREDITOR.postalCode} ${CREDITOR.town}`], detailsX, 199, detailsWidth, 10);
   textBlock('Referenz', [referencePrinted], detailsX, 224, detailsWidth, 10);
   textBlock('Zusätzliche Informationen', [`Rechnung ${invoice.invoice_number}`], detailsX, 237, detailsWidth, 10);
-  if (hasCustomerAddress) {
-    textBlock('Zahlbar durch', [customerName, customerAddress, customerTown], detailsX, 250, detailsWidth, 10);
+  if (hasAnyCustomerInfo) {
+    textBlock('Zahlbar durch', printedPayerLines, detailsX, 250, detailsWidth, 10);
   } else {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text('Zahlbar durch (Name/Adresse)', detailsX, 250);
     drawCornerField(detailsX, 254, 65, 25);
   }
 
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.2);
-  doc.line(20, 185, 190, 185);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(0, 0, 0); doc.text('Krypto-Zahlungen', 20, 177);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.text(ETH_ADDR, 20, 181); doc.text(SOL_ADDR, 110, 181);
-  if (ethQr) doc.addImage(ethQr, 'PNG', 20, 126, 28, 28);
-  if (solQr) doc.addImage(solQr, 'PNG', 110, 126, 28, 28);
+  doc.setDrawColor(...BRAND.light);
+  doc.setLineWidth(0.3);
+  doc.line(20, 115, 190, 115);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...BRAND.text); doc.text('Krypto-Zahlungen', 20, 123);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...BRAND.muted);
+  doc.text('Alternativ konnen Sie den Rechnungsbetrag an eine der folgenden Adressen senden.', 20, 130);
+  const cryptoCards = [
+    { label: 'Ethereum (ETH)', addr: ETH_ADDR, qr: ethQr, x: 20 },
+    { label: 'Solana (SOL)', addr: SOL_ADDR, qr: solQr, x: 110 },
+  ];
+  cryptoCards.forEach(card => {
+    doc.setDrawColor(...BRAND.light); doc.setLineWidth(0.3);
+    doc.roundedRect(card.x, 136, 80, 44, 2, 2, 'S');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...BRAND.text);
+    doc.text(card.label, card.x + 4, 143);
+    if (card.qr) doc.addImage(card.qr, 'PNG', card.x + 4, 147, 22, 22);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(...BRAND.muted);
+    const addrLines = doc.splitTextToSize(card.addr, 48);
+    doc.text(addrLines, card.x + 30, 152);
+  });
 
   doc.save(`${invoice.invoice_number}.pdf`);
 }
