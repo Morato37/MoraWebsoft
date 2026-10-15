@@ -116,9 +116,13 @@ export default function Invoices() {
   };
 
   const downloadPdf = async (inv: Invoice) => {
-    const { data: items } = await supabase.from('admin_invoice_items').select('*').eq('invoice_id', inv.id);
-    const { data: customer } = await supabase.from('admin_customers').select('*').eq('id', inv.customer_id).maybeSingle();
-    openInvoicePdf({ ...inv, admin_customers: customer ?? undefined, admin_invoice_items: items ?? [] }, items ?? []);
+    try {
+      const { data: items } = await supabase.from('admin_invoice_items').select('*').eq('invoice_id', inv.id);
+      const { data: customer } = await supabase.from('admin_customers').select('*').eq('id', inv.customer_id).maybeSingle();
+      await openInvoicePdf({ ...inv, admin_customers: customer ?? undefined, admin_invoice_items: items ?? [] }, items ?? []);
+    } catch (err) {
+      console.error('PDF download failed:', err);
+    }
   };
 
   const setItem = (i: number, field: keyof typeof emptyItem, val: string | number) => {

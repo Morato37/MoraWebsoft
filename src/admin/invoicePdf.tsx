@@ -18,12 +18,16 @@ function formatCHF(value: number): string {
   return `CHF ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
 }
 
-async function generateQR(text: string, width = 160): Promise<string> {
-  return QRCode.toDataURL(text, {
-    width,
-    margin: 1,
-    color: { dark: '#000000', light: '#ffffff' },
-  });
+async function generateQR(text: string, width = 160): Promise<string | null> {
+  try {
+    return await QRCode.toDataURL(text, {
+      width,
+      margin: 1,
+      color: { dark: '#000000', light: '#ffffff' },
+    });
+  } catch {
+    return null;
+  }
 }
 
 function buildSwissQrPayload(invoice: Invoice): string {
@@ -37,12 +41,12 @@ function buildSwissQrPayload(invoice: Invoice): string {
     '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
     `Rechnung ${invoice.invoice_number}`, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
     'EPD',
-  ].join('\\n');
+  ].join('\n');
 }
 
 async function loadLogo(): Promise<string | null> {
   try {
-    const res = await fetch('/logo.png');
+    const res = await fetch('/favicon.svg');
     if (!res.ok) return null;
     const blob = await res.blob();
     return new Promise((resolve) => {
@@ -68,7 +72,7 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
     generateQR(`ethereum:${ETH_ADDR}`),
     generateQR(`solana:${SOL_ADDR}`),
     generateQR(buildSwissQrPayload(invoice), 520),
-  ]);
+  ]) as [string | null, string | null, string | null, string | null];
 
   // ── HEADER ──────────────────────────────────────────────────────────────
   if (logoData) {
