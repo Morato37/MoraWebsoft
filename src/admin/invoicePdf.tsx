@@ -297,32 +297,32 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
 
   doc.setDrawColor(...BRAND.light);
   doc.setLineWidth(0.3);
-  doc.line(20, 115, 190, 115);
+  doc.line(20, 90, 190, 90);
 
   doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...BRAND.text);
-  doc.text('Zahlungskonditionen:', 20, 122);
+  doc.text('Zahlungskonditionen:', 20, 97);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...BRAND.muted);
-  doc.text('30 Tage', 60, 122);
-  doc.text('Zahlbar an (IBAN):', 20, 128);
+  doc.text('30 Tage', 60, 97);
+  doc.text('Zahlbar an (IBAN):', 20, 103);
   doc.setFont('helvetica', 'bold'); doc.setTextColor(...BRAND.text);
-  doc.text('CH13 0025 3253 1033 33M1 H', 60, 128);
+  doc.text('CH13 0025 3253 1033 33M1 H', 60, 103);
 
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...BRAND.text); doc.text('Krypto-Zahlungen', 20, 137);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...BRAND.text); doc.text('Krypto-Zahlungen', 20, 112);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...BRAND.muted);
-  doc.text('Alternativ konnen Sie den Rechnungsbetrag an eine der folgenden Adressen senden.', 20, 144);
+  doc.text('Alternativ konnen Sie den Rechnungsbetrag an eine der folgenden Adressen senden.', 20, 119);
   const cryptoCards = [
     { label: 'Ethereum (ETH)', addr: ETH_ADDR, qr: ethQr, x: 20 },
     { label: 'Solana (SOL)', addr: SOL_ADDR, qr: solQr, x: 110 },
   ];
   cryptoCards.forEach(card => {
     doc.setDrawColor(...BRAND.light); doc.setLineWidth(0.3);
-    doc.roundedRect(card.x, 150, 80, 44, 2, 2, 'S');
+    doc.roundedRect(card.x, 125, 80, 44, 2, 2, 'S');
     doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...BRAND.text);
-    doc.text(card.label, card.x + 4, 157);
-    if (card.qr) doc.addImage(card.qr, 'PNG', card.x + 4, 161, 22, 22);
+    doc.text(card.label, card.x + 4, 132);
+    if (card.qr) doc.addImage(card.qr, 'PNG', card.x + 4, 136, 22, 22);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(...BRAND.muted);
     const addrLines = doc.splitTextToSize(card.addr, 48);
-    doc.text(addrLines, card.x + 30, 166);
+    doc.text(addrLines, card.x + 30, 141);
   });
 
   doc.save(`${invoice.invoice_number}.pdf`);
