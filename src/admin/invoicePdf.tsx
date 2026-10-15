@@ -22,7 +22,8 @@ async function generateQR(text: string, width = 160): Promise<string | null> {
   try {
     return await QRCode.toDataURL(text, {
       width,
-      margin: 1,
+      margin: 4,
+      errorCorrectionLevel: 'H',
       color: { dark: '#000000', light: '#ffffff' },
     });
   } catch {
@@ -69,6 +70,7 @@ function buildSwissQrPayload(invoice: Invoice): string {
     '',
     'CH',
     'NON',
+    '',
     `Rechnung ${invoice.invoice_number}`,
     'EPD',
   ].join('\n');
@@ -261,81 +263,92 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   rowY += 10;
 
   doc.addPage();
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND.text);
-  doc.text('ZAHLUNGSINFORMATIONEN', margin, 22);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.muted);
-  doc.text(`Rechnung ${invoice.invoice_number}`, margin, 29);
-
-  doc.setDrawColor(...BRAND.cyan);
-  doc.setLineWidth(0.6);
-  doc.line(margin, 36, W - margin, 36);
+  doc.setDrawColor(...BRAND.text);
+  doc.setLineWidth(0.35);
+  doc.line(margin, 10, W - margin, 10);
+  doc.line(86, 10, 86, 287);
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
+  doc.setFontSize(16);
   doc.setTextColor(...BRAND.text);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND.text);
-  doc.text('Empfangsschein', margin, 50);
-  doc.text('Zahlteil', 94, 50);
-  doc.setDrawColor(...BRAND.light);
-  doc.line(86, 44, 86, 125);
+  doc.text('Empfangsschein', margin, 24);
+  doc.text('Zahlteil', 94, 24);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(...BRAND.muted);
-  doc.text('Zahlungsempfänger', margin, 59);
-  doc.setTextColor(...BRAND.text);
-  doc.text('Matteo Mora', margin, 66);
-  doc.text('Alt Ferrachstrasse 37', margin, 72);
-  doc.text('8630 Rüti, Schweiz', margin, 78);
-  doc.setTextColor(...BRAND.muted);
-  doc.text('Betrag', margin, 84);
+  doc.text(`Rechnung ${invoice.invoice_number}`, 94, 30);
+
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
   doc.setTextColor(...BRAND.text);
-  doc.text(formatCHF(invoice.total), margin, 91);
+  doc.text('Konto / Zahlbar an', margin, 38);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...BRAND.muted);
-  doc.text('Mitteilung', margin, 109);
-  doc.setTextColor(...BRAND.text);
-  doc.text(`Rechnung ${invoice.invoice_number}`, margin, 116);
+  doc.setFontSize(8);
+  doc.text('CH13 0025 3253 1033 33M1 H', margin, 45);
+  doc.text('Matteo Mora', margin, 51);
+  doc.text('Alt Ferrachstrasse 37', margin, 57);
+  doc.text('8630 Rüti', margin, 63);
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('Zahlbar durch', margin, 82);
+  doc.setFont('helvetica', 'normal');
+  const payerLines = [invoice.admin_customers?.name, invoice.admin_customers?.address].filter(Boolean) as string[];
+  payerLines.forEach((line, index) => doc.text(line, margin, 89 + index * 6));
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('Währung', margin, 145);
+  doc.text('Betrag', 55, 145);
+  doc.setFont('helvetica', 'normal');
+  doc.text('CHF', margin, 152);
+  doc.text(formatCHF(invoice.total).replace('CHF ', ''), 55, 152);
+  doc.setFontSize(7);
+  doc.text('Annahmestelle', 55, 178);
 
   if (swissQr) {
-    doc.addImage(swissQr, 'PNG', 145, 64, 46, 46);
+    doc.addImage(swissQr, 'PNG', 94, 38, 58, 58);
     doc.setFillColor(255, 255, 255);
-    doc.rect(163, 82, 10, 10, 'F');
+    doc.rect(118, 62, 10, 10, 'F');
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(1.8);
-    doc.line(165, 87, 171, 87);
-    doc.line(168, 84, 168, 90);
+    doc.line(120, 67, 126, 67);
+    doc.line(123, 64, 123, 70);
   }
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...BRAND.muted);
-  doc.text('Scannen Sie den QR-Code mit Ihrer Banking-App.', 94, 59);
-  doc.setTextColor(...BRAND.text);
-  doc.text('Matteo Mora', 94, 68);
-  doc.text('Alt Ferrachstrasse 37', 94, 74);
-  doc.text('8630 Rüti, Schweiz', 94, 80);
+
+  const infoX = 158;
   doc.setFont('helvetica', 'bold');
-  doc.text(formatCHF(invoice.total), 94, 106);
+  doc.setFontSize(8);
+  doc.setTextColor(...BRAND.text);
+  doc.text('Konto / Zahlbar an', infoX, 40);
+  doc.setFont('helvetica', 'normal');
+  doc.text('CH13 0025 3253 1033 33M1 H', infoX, 46);
+  doc.text('Matteo Mora', infoX, 52);
+  doc.text('Alt Ferrachstrasse 37', infoX, 58);
+  doc.text('8630 Rüti', infoX, 64);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Betrag', infoX, 78);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`CHF ${Number(invoice.total).toFixed(2)}`, infoX, 84);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Zusätzliche Informationen', infoX, 100);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Rechnung ${invoice.invoice_number}`, infoX, 106);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Zahlbar durch', infoX, 122);
+  doc.setFont('helvetica', 'normal');
+  payerLines.forEach((line, index) => doc.text(line, infoX, 128 + index * 6));
 
   doc.setDrawColor(...BRAND.light);
-  doc.line(margin, 122, W - margin, 122);
+  doc.line(margin, 190, W - margin, 190);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(...BRAND.text);
-  doc.text('Crypto-Zahlungen', margin, 136);
+  doc.text('Crypto-Zahlungen', margin, 202);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...BRAND.muted);
-  doc.text('Alternativ können Sie den Rechnungsbetrag an eine der folgenden Adressen senden.', margin, 143);
+  doc.text('Alternativ können Sie den Rechnungsbetrag an eine der folgenden Adressen senden.', margin, 209);
 
-  const qrSize = 34;
-  const cryptoY = 153;
+  const qrSize = 26;
+  const cryptoY = 220;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...BRAND.text);
