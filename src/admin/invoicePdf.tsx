@@ -30,6 +30,22 @@ async function generateQR(text: string, width = 160): Promise<string | null> {
   }
 }
 
+async function loadPublicImage(path: string): Promise<string | null> {
+  try {
+    const response = await fetch(path);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 function buildSwissQrPayload(invoice: Invoice): string {
   const customer = invoice.admin_customers;
   return [
@@ -68,8 +84,8 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   const SOL_ADDR = 'DGR7BisMWvG3aXshFRLVq2H8mjSCDrfJCGxnu1PdgK2F';
 
   const [ethQr, solQr, swissQr] = await Promise.all([
-    generateQR(`ethereum:${ETH_ADDR}`),
-    generateQR(`solana:${SOL_ADDR}`),
+    loadPublicImage('/eth-qr.png'),
+    loadPublicImage('/sol-qr.png'),
     generateQR(buildSwissQrPayload(invoice), 520),
   ]) as [string | null, string | null, string | null];
 
