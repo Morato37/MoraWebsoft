@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Customer, Invoice, Order } from './types';
-import { Plus, Pencil, Trash2, X, Check, FileText, Download, Trash } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, FileText, Download, Trash, CalendarClock } from 'lucide-react';
 import { openInvoicePdf } from './invoicePdf';
 
 const STATUS_OPTIONS = ['entwurf', 'offen', 'bezahlt', 'überfällig', 'storniert'];
@@ -17,7 +17,7 @@ const emptyInv = {
   invoice_number: '', customer_id: '', order_id: '', status: 'entwurf',
   issue_date: new Date().toISOString().slice(0, 10),
   due_date: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
-  tax_rate: 7.7, notes: '',
+  tax_rate: 8.1, notes: '',
 };
 const emptyItem = { description: '', quantity: 1, unit_price: 0 };
 const INPUT = 'w-full bg-[#12122a] border border-white/8 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400/40 transition-colors';
@@ -26,6 +26,17 @@ function calcTotals(items: typeof emptyItem[], taxRate: number) {
   const subtotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
   const tax_amount = subtotal * (taxRate / 100);
   return { subtotal, tax_amount, total: subtotal + tax_amount };
+}
+
+function getDueInfo(inv: Invoice): { label: string; cls: string } | null {
+  if (inv.status === 'bezahlt' || inv.status === 'storniert') return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(inv.due_date); due.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((due.getTime() - today.getTime()) / 86400000);
+  if (diffDays < 0) return { label: `${Math.abs(diffDays)} Tag${Math.abs(diffDays) === 1 ? '' : 'e'} überfällig`, cls: 'text-red-400 bg-red-400/8 border-red-400/20' };
+  if (diffDays === 0) return { label: 'Heute fällig', cls: 'text-orange-400 bg-orange-400/8 border-orange-400/20' };
+  if (diffDays <= 7) return { label: `in ${diffDays} Tag${diffDays === 1 ? '' : 'en'} fällig`, cls: 'text-yellow-400 bg-yellow-400/8 border-yellow-400/20' };
+  return { label: `fällig ${due.toLocaleDateString('de-CH')}`, cls: 'text-white/40 bg-white/4 border-white/10' };
 }
 
 export default function Invoices() {
@@ -146,6 +157,11 @@ export default function Invoices() {
                   <p className="text-white/35 text-xs font-mono truncate">
                     {(inv.admin_customers as any)?.name || '—'} · {new Date(inv.issue_date).toLocaleDateString('de-CH')}
                   </p>
+                  {getDueInfo(inv) && (
+                    <span className={`inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-mono border ${getDueInfo(inv)!.cls}`}>
+                      <CalendarClock size={10} /> {getDueInfo(inv)!.label}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="hidden md:flex items-center gap-4 text-xs font-mono">
@@ -153,7 +169,7 @@ export default function Invoices() {
                 <span className={`px-2.5 py-1 rounded-lg text-xs font-mono border ${STATUS_COLORS[inv.status] ?? 'text-white/40'}`}>{inv.status}</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <button onClick={() => downloadPdf(inv)} title="PDF öffnen" className="w-8 h-8 rounded-lg border border-white/8 flex items-center justify-center text-white/35 hover:text-cyan-400 hover:border-cyan-400/30 transition-colors">
+                <button onClick={() => downloadPdf(inv)} title="PDF herunterladen" className="w-8 h-8 rounded-lg border border-white/8 flex items-center justify-center text-white/35 hover:text-cyan-400 hover:border-cyan-400/30 transition-colors">
                   <Download size={13} />
                 </button>
                 <button onClick={() => openEdit(inv)} className="w-8 h-8 rounded-lg border border-white/8 flex items-center justify-center text-white/35 hover:text-cyan-400 hover:border-cyan-400/30 transition-colors">

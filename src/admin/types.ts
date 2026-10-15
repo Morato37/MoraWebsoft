@@ -16,6 +16,7 @@ export interface Order {
   status: string;
   order_date: string;
   notes: string;
+  quote_id: string | null;
   created_at: string;
   admin_customers?: { name: string; company: string };
 }

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Customer, Order } from './types';
-import { Plus, Pencil, Trash2, X, Check, ClipboardList } from 'lucide-react';
+import type { Customer, Order, Quote } from './types';
+import { Plus, Pencil, Trash2, X, Check, ClipboardList, Download, FileText } from 'lucide-react';
+import { downloadOrderPdf } from './orderPdf';
 
 const STATUS_OPTIONS = ['offen', 'in Bearbeitung', 'abgeschlossen', 'storniert'];
 const STATUS_COLORS: Record<string, string> = {
@@ -21,6 +22,7 @@ export default function Orders() {
   const [modal, setModal] = useState<{ open: boolean; data: typeof emptyOrder; id?: string }>({ open: false, data: { ...emptyOrder } });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [converting, setConverting] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -58,6 +60,55 @@ export default function Orders() {
     load();
   };
 
+  const convertToInvoice = async (order: Order) => {
+    if (converting) return;
+    setConverting(order.id);
+
+    let quote: Quote | null = null;
+    if (order.quote_id) {
+      const { data: q } = await supabase.from('admin_quotes').select('*').eq('id', order.quote_id).maybeSingle();
+      quote = q as Quote | null;
+    }
+
+    const { count } = await supabase.from('admin_invoices').select('*', { count: 'exact', head: true });
+    const invoiceNumber = `RE-${new Date().getFullYear()}-${String((count ?? 0) + 1).padStart(3, '0')}`;
+
+    const invoicePayload = {
+      invoice_number: invoiceNumber,
+      customer_id: order.customer_id,
+      order_id: order.id,
+      status: 'entwurf',
+      issue_date: new Date().toISOString().slice(0, 10),
+      due_date: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+      subtotal: quote ? Number(quote.subtotal) : 0,
+      tax_rate: quote ? Number(quote.tax_rate) : 8.1,
+      tax_amount: quote ? Number(quote.tax_amount) : 0,
+      total: quote ? Number(quote.total) : 0,
+      notes: quote?.notes ?? '',
+    };
+
+    const invoiceResult = await supabase.from('admin_invoices').insert(invoicePayload).select('id').maybeSingle();
+    if (invoiceResult.error || !invoiceResult.data) {
+      setConverting(null);
+      return;
+    }
+
+    if (quote && quote.items && quote.items.length > 0) {
+      await supabase.from('admin_invoice_items').insert(
+        quote.items.map(item => ({
+          invoice_id: invoiceResult.data!.id,
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        }))
+      );
+    }
+
+    await supabase.from('admin_orders').update({ status: 'abgeschlossen' }).eq('id', order.id);
+    setConverting(null);
+    load();
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -84,12 +135,26 @@ export default function Orders() {
                   <p className="text-white/35 text-xs font-mono truncate">
                     {(o.admin_customers as any)?.name || '—'} · {new Date(o.order_date).toLocaleDateString('de-CH')}
                   </p>
+                  {o.quote_id && <p className="text-cyan-400/50 text-[10px] font-mono mt-0.5">Aus Offerte erstellt</p>}
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`px-2.5 py-1 rounded-lg text-xs font-mono border ${STATUS_COLORS[o.status] ?? 'text-white/40 bg-white/4 border-white/10'}`}>
                   {o.status}
                 </span>
+                {o.status !== 'abgeschlossen' && o.status !== 'storniert' && (
+                  <button
+                    onClick={() => convertToInvoice(o)}
+                    disabled={converting === o.id}
+                    title="Rechnung erstellen"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 text-xs font-mono hover:bg-emerald-400/20 hover:border-emerald-400/40 transition-colors disabled:opacity-50"
+                  >
+                    <FileText size={12} /> {converting === o.id ? '...' : 'Rechnung'}
+                  </button>
+                )}
+                <button onClick={() => downloadOrderPdf(o)} title="PDF herunterladen" className="w-8 h-8 rounded-lg border border-white/8 flex items-center justify-center text-white/35 hover:text-cyan-400 hover:border-cyan-400/30 transition-colors">
+                  <Download size={13} />
+                </button>
                 <button onClick={() => openEdit(o)} className="w-8 h-8 rounded-lg border border-white/8 flex items-center justify-center text-white/35 hover:text-cyan-400 hover:border-cyan-400/30 transition-colors">
                   <Pencil size={13} />
                 </button>

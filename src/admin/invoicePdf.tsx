@@ -14,12 +14,26 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('de-CH', { day: 'numeric', month: 'numeric', year: 'numeric' });
 }
 
-async function generateQR(text: string): Promise<string> {
+async function generateQR(text: string, width = 160): Promise<string> {
   return QRCode.toDataURL(text, {
-    width: 160,
+    width,
     margin: 1,
     color: { dark: '#000000', light: '#ffffff' },
   });
+}
+
+function buildSwissQrPayload(invoice: Invoice): string {
+  const customer = invoice.admin_customers;
+  return [
+    'SPC', '0200', '1',
+    'K', 'MoraWebsoft', '8630 Rüti ZH', 'CH',
+    '', '', '', '', '', '',
+    'K', customer?.name ?? '', customer?.address ?? '', '', 'CH',
+    Number(invoice.total).toFixed(2), 'CHF',
+    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    `Rechnung ${invoice.invoice_number}`, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'EPD',
+  ].join('\\n');
 }
 
 async function loadLogo(): Promise<string | null> {
@@ -45,10 +59,11 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   const ETH_ADDR = '0x444920D5A72F2CA91E876781e3302549eF8926cB';
   const SOL_ADDR = 'DGR7BisMWvG3aXshFRLVq2H8mjSCDrfJCGxnu1PdgK2F';
 
-  const [logoData, ethQr, solQr] = await Promise.all([
+  const [logoData, ethQr, solQr, swissQr] = await Promise.all([
     loadLogo(),
     generateQR(`ethereum:${ETH_ADDR}`),
     generateQR(`solana:${SOL_ADDR}`),
+    generateQR(buildSwissQrPayload(invoice), 520),
   ]);
 
   // ── HEADER ──────────────────────────────────────────────────────────────
@@ -226,39 +241,92 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   doc.text('CH13 0025 3253 1033 33M1 H', margin + 40, rowY);
   rowY += 10;
 
-  // Crypto QR codes side by side
-  const qrSize = 30;
-  const labelY = rowY;
-  const qrStartY = rowY + 4;
+  doc.addPage();
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND.text);
+  doc.text('ZAHLUNGSINFORMATIONEN', margin, 22);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.muted);
+  doc.text(`Rechnung ${invoice.invoice_number}`, margin, 29);
 
-  // ETH column
+  doc.setDrawColor(...BRAND.cyan);
+  doc.setLineWidth(0.6);
+  doc.line(margin, 36, W - margin, 36);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.text);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.text);
+  doc.text('Empfangsschein', margin, 50);
+  doc.text('Zahlteil', 94, 50);
+  doc.setDrawColor(...BRAND.light);
+  doc.line(86, 44, 86, 119);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Zahlungsempfänger', margin, 59);
+  doc.setTextColor(...BRAND.text);
+  doc.text('MoraWebsoft', margin, 66);
+  doc.text('8630 Rüti ZH, Schweiz', margin, 72);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Betrag', margin, 84);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...BRAND.text);
+  doc.text(formatCHF(invoice.total), margin, 91);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Mitteilung', margin, 103);
+  doc.setTextColor(...BRAND.text);
+  doc.text(`Rechnung ${invoice.invoice_number}`, margin, 110);
+
+  if (swissQr) {
+    doc.addImage(swissQr, 'PNG', 145, 64, 46, 46);
+    doc.setFillColor(255, 255, 255);
+    doc.rect(163, 82, 10, 10, 'F');
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(1.8);
+    doc.line(165, 87, 171, 87);
+    doc.line(168, 84, 168, 90);
+  }
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Scannen Sie den QR-Code mit Ihrer Banking-App.', 94, 59);
+  doc.setTextColor(...BRAND.text);
+  doc.text('MoraWebsoft', 94, 68);
+  doc.text('8630 Rüti ZH, Schweiz', 94, 74);
+  doc.setFont('helvetica', 'bold');
+  doc.text(formatCHF(invoice.total), 94, 106);
+
+  doc.setDrawColor(...BRAND.light);
+  doc.line(margin, 122, W - margin, 122);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...BRAND.text);
+  doc.text('Crypto-Zahlungen', margin, 136);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Alternativ können Sie den Rechnungsbetrag an eine der folgenden Adressen senden.', margin, 143);
+
+  const qrSize = 34;
+  const cryptoY = 153;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...BRAND.text);
-  doc.text('ETH', margin, labelY);
+  doc.text('ETH', margin, cryptoY);
+  doc.text('SOL', margin + 70, cryptoY);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6);
   doc.setTextColor(...BRAND.muted);
-  doc.text(ETH_ADDR, margin, labelY + 4);
-  if (ethQr) {
-    doc.addImage(ethQr, 'PNG', margin, qrStartY + 2, qrSize, qrSize);
-  }
-
-  // SOL column
-  const solX = margin + qrSize + 14;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...BRAND.text);
-  doc.text('SOL', solX, labelY);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(...BRAND.muted);
-  doc.text(SOL_ADDR, solX, labelY + 4);
-  if (solQr) {
-    doc.addImage(solQr, 'PNG', solX, qrStartY + 2, qrSize, qrSize);
-  }
-
-  rowY = qrStartY + qrSize + 10;
+  doc.text(ETH_ADDR, margin, cryptoY + 5);
+  doc.text(SOL_ADDR, margin + 70, cryptoY + 5);
+  if (ethQr) doc.addImage(ethQr, 'PNG', margin, cryptoY + 10, qrSize, qrSize);
+  if (solQr) doc.addImage(solQr, 'PNG', margin + 70, cryptoY + 10, qrSize, qrSize);
 
   // ── FOOTER ───────────────────────────────────────────────────────────────
   const footerY = 287;
@@ -270,6 +338,5 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   doc.setTextColor(...BRAND.muted);
   doc.text('MoraWebsoft · matteo@morawebsoft.com · 8630 Rüti ZH', W / 2, footerY, { align: 'center' });
 
-  const blob = doc.output('blob');
-  window.open(URL.createObjectURL(blob), '_blank');
+  doc.save(`${invoice.invoice_number}.pdf`);
 }

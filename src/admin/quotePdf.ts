@@ -1,17 +1,171 @@
+import jsPDF from 'jspdf';
 import type { Quote } from './types';
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character] ?? character));
-}
+const BRAND = {
+  cyan: [0, 188, 212] as [number, number, number],
+  text: [40, 40, 60] as [number, number, number],
+  muted: [120, 120, 150] as [number, number, number],
+  light: [220, 220, 230] as [number, number, number],
+};
 
 function formatCHF(value: number): string {
   return `CHF ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
 }
 
+function formatDate(value: string): string {
+  return new Date(value).toLocaleDateString('de-CH');
+}
+
+function addWrappedText(doc: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight = 4): number {
+  const lines = doc.splitTextToSize(text, maxWidth) as string[];
+  doc.text(lines, x, y);
+  return y + lines.length * lineHeight;
+}
+
 export function openQuotePdf(quote: Quote): void {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  const width = 210;
+  const margin = 20;
+  const contentWidth = width - margin * 2;
   const customer = quote.admin_customers;
-  const items = (quote.items ?? []).map((item, index) => `<tr><td>${index + 1}</td><td><strong>${escapeHtml(item.description)}</strong>${item.note ? `<br><small>${escapeHtml(item.note)}</small>` : ''}</td><td>${item.quantity}</td><td>${formatCHF(Number(item.unit_price))}</td><td>${formatCHF(Number(item.quantity) * Number(item.unit_price))}</td></tr>`).join('');
-  const html = `<!doctype html><html lang="de"><head><meta charset="UTF-8"><title>Offerte ${escapeHtml(quote.quote_number)}</title><style>*{box-sizing:border-box}body{margin:0;padding:48px;color:#1e293b;font-family:Inter,system-ui,sans-serif}main{max-width:760px;margin:auto}.top{display:flex;justify-content:space-between;gap:32px;margin-bottom:36px}.brand{font-size:18px;font-weight:800}.title{margin-top:18px;font-size:32px;font-weight:900;letter-spacing:-1px}.meta{text-align:right;font:12px monospace;color:#64748b}.number{font-size:20px;font-weight:700;color:#0891b2;margin-bottom:8px}.line{height:2px;background:#0891b2;margin-bottom:32px}.addresses{display:flex;gap:80px;margin-bottom:34px}.label{margin-bottom:8px;color:#94a3b8;font:10px monospace;letter-spacing:2px}.address{line-height:1.7;font-size:13px;color:#64748b}.address strong{display:block;color:#1e293b;font-size:14px;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-bottom:24px}th{padding:10px 8px;text-align:left;background:#f8fafc;border-bottom:2px solid #e2e8f0;color:#94a3b8;font:10px monospace;letter-spacing:1px}td{padding:11px 8px;border-bottom:1px solid #e2e8f0;font-size:13px}td:first-child,td:nth-child(n+3){font-family:monospace;color:#64748b}td:nth-child(n+3){text-align:right}small{color:#64748b;line-height:1.5}.totals{margin-left:auto;width:280px}.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:13px}.total{font-weight:800;font-size:16px;color:#1e293b}.total span:last-child{color:#0891b2}.notes{margin-top:30px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;line-height:1.6}.footer{margin-top:44px;padding-top:14px;border-top:2px solid #0891b2;text-align:center;color:#94a3b8;font:11px monospace}.print{display:block;margin:34px auto 0;padding:12px 28px;border:0;border-radius:8px;background:#0891b2;color:#fff;font:700 13px monospace;cursor:pointer}@media print{body{padding:24px}.print{display:none}}</style></head><body><main><div class="top"><div><div class="brand">MoraWebsoft</div><div class="title">OFFERTE</div></div><div class="meta"><div class="number">${escapeHtml(quote.quote_number)}</div><div>Erstellt: ${new Date(quote.created_at).toLocaleDateString('de-CH')}</div><div>Gültig bis: ${new Date(quote.valid_until).toLocaleDateString('de-CH')}</div></div></div><div class="line"></div><div class="addresses"><div><div class="label">VON</div><div class="address"><strong>Matteo Mora</strong>MoraWebsoft<br>8630 Rüti ZH<br>matteo@morawebsoft.com</div></div><div><div class="label">AN</div><div class="address"><strong>${escapeHtml(customer?.name ?? '')}</strong>${customer?.company ? `${escapeHtml(customer.company)}<br>` : ''}${customer?.address ? `${escapeHtml(customer.address)}<br>` : ''}${escapeHtml(customer?.email ?? '')}</div></div></div><h3>${escapeHtml(quote.title)}</h3><table><thead><tr><th>#</th><th>LEISTUNG</th><th>MENGE</th><th>EINZELPREIS</th><th>TOTAL</th></tr></thead><tbody>${items}</tbody></table><div class="totals"><div class="row"><span>Zwischensumme</span><span>${formatCHF(Number(quote.subtotal))}</span></div><div class="row"><span>Rabatt</span><span>- ${formatCHF(Number(quote.discount_amount))}</span></div><div class="row"><span>MwSt. ${quote.tax_rate}%</span><span>${formatCHF(Number(quote.tax_amount))}</span></div><div class="row total"><span>Gesamtbetrag</span><span>${formatCHF(Number(quote.total))}</span></div></div>${quote.notes ? `<div class="notes"><strong>Bemerkungen</strong><br>${escapeHtml(quote.notes)}</div>` : ''}<div class="footer">MoraWebsoft · matteo@morawebsoft.com · 8630 Rüti ZH</div><button class="print" onclick="window.print()">Als PDF speichern / Drucken</button></main></body></html>`;
-  const windowRef = window.open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank');
-  if (windowRef) windowRef.focus();
+  let y = 20;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(...BRAND.cyan);
+  doc.text('MoraWebsoft', margin, y);
+  doc.setFontSize(26);
+  doc.setTextColor(...BRAND.text);
+  doc.text('OFFERTE', margin, y + 16);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(...BRAND.cyan);
+  doc.text(quote.quote_number, width - margin, y, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.muted);
+  doc.text(`Erstellt: ${formatDate(quote.created_at)}`, width - margin, y + 7, { align: 'right' });
+  doc.text(`Gültig bis: ${formatDate(quote.valid_until)}`, width - margin, y + 12, { align: 'right' });
+
+  y += 28;
+  doc.setDrawColor(...BRAND.cyan);
+  doc.setLineWidth(0.7);
+  doc.line(margin, y, width - margin, y);
+  y += 12;
+
+  doc.setFontSize(7);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('VON', margin, y);
+  doc.text('AN', width / 2, y);
+  y += 5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...BRAND.text);
+  doc.text('Matteo Mora', margin, y);
+  doc.text(customer?.name ?? '—', width / 2, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  y += 5;
+  doc.text('MoraWebsoft · 8630 Rüti ZH', margin, y);
+  if (customer?.company) doc.text(customer.company, width / 2, y);
+  y += 5;
+  doc.text('matteo@morawebsoft.com', margin, y);
+  if (customer?.address) {
+    y = addWrappedText(doc, customer.address, width / 2, y, contentWidth / 2 - 4, 4);
+  }
+  if (customer?.email) doc.text(customer.email, width / 2, y);
+
+  y += 12;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(...BRAND.text);
+  y = addWrappedText(doc, quote.title, margin, y, contentWidth, 6) + 5;
+
+  const drawTableHeader = () => {
+    doc.setFillColor(245, 247, 250);
+    doc.rect(margin, y, contentWidth, 8, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...BRAND.muted);
+    doc.text('#', margin + 3, y + 5);
+    doc.text('LEISTUNG', margin + 12, y + 5);
+    doc.text('MENGE', width - margin - 75, y + 5, { align: 'right' });
+    doc.text('EINZELPREIS', width - margin - 42, y + 5, { align: 'right' });
+    doc.text('TOTAL', width - margin - 3, y + 5, { align: 'right' });
+    y += 8;
+  };
+
+  drawTableHeader();
+  (quote.items ?? []).forEach((item, index) => {
+    const descriptionLines = doc.splitTextToSize(item.description, 78) as string[];
+    const noteLines = item.note ? doc.splitTextToSize(item.note, 78) as string[] : [];
+    const rowHeight = Math.max(9, (descriptionLines.length + noteLines.length) * 4 + 4);
+    if (y + rowHeight > 270) {
+      doc.addPage();
+      y = 20;
+      drawTableHeader();
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND.text);
+    doc.text(String(index + 1), margin + 3, y + 5);
+    doc.text(descriptionLines, margin + 12, y + 5);
+    if (noteLines.length > 0) {
+      doc.setFontSize(7.5);
+      doc.setTextColor(...BRAND.muted);
+      doc.text(noteLines, margin + 12, y + 5 + descriptionLines.length * 4);
+    }
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND.text);
+    doc.text(String(item.quantity), width - margin - 75, y + 5, { align: 'right' });
+    doc.text(formatCHF(Number(item.unit_price)), width - margin - 42, y + 5, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...BRAND.cyan);
+    doc.text(formatCHF(Number(item.quantity) * Number(item.unit_price)), width - margin - 3, y + 5, { align: 'right' });
+    doc.setDrawColor(...BRAND.light);
+    doc.line(margin, y + rowHeight, width - margin, y + rowHeight);
+    y += rowHeight;
+  });
+
+  y += 8;
+  const totalsX = width - margin - 75;
+  const addTotal = (label: string, value: string, bold = false) => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setFontSize(bold ? 11 : 9);
+    doc.setTextColor(...(bold ? BRAND.text : BRAND.muted));
+    doc.text(label, totalsX, y);
+    doc.setTextColor(...(bold ? BRAND.cyan : BRAND.text));
+    doc.text(value, width - margin, y, { align: 'right' });
+    y += bold ? 8 : 6;
+  };
+  addTotal('Zwischensumme', formatCHF(Number(quote.subtotal)));
+  addTotal('Rabatt', `- ${formatCHF(Number(quote.discount_amount))}`);
+  addTotal(`MwSt. ${quote.tax_rate}%`, formatCHF(Number(quote.tax_amount)));
+  doc.setDrawColor(...BRAND.light);
+  doc.line(totalsX, y - 2, width - margin, y - 2);
+  y += 3;
+  addTotal('Gesamtbetrag', formatCHF(Number(quote.total)), true);
+
+  if (quote.notes) {
+    y += 8;
+    doc.setDrawColor(...BRAND.light);
+    doc.roundedRect(margin, y, contentWidth, 18, 2, 2, 'S');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...BRAND.muted);
+    doc.text('BEMERKUNGEN', margin + 4, y + 5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...BRAND.text);
+    addWrappedText(doc, quote.notes, margin + 4, y + 11, contentWidth - 8, 4);
+  }
+
+  doc.setDrawColor(...BRAND.cyan);
+  doc.line(margin, 282, width - margin, 282);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('MoraWebsoft · matteo@morawebsoft.com · 8630 Rüti ZH', width / 2, 288, { align: 'center' });
+  doc.save(`${quote.quote_number}.pdf`);
 }
