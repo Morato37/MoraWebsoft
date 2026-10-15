@@ -33,13 +33,27 @@ async function generateQR(text: string, width = 160): Promise<string | null> {
 function buildSwissQrPayload(invoice: Invoice): string {
   const customer = invoice.admin_customers;
   return [
-    'SPC', '0200', '1',
-    'K', 'MoraWebsoft', '8630 Rüti ZH', 'CH',
-    '', '', '', '', '', '',
-    'K', customer?.name ?? '', customer?.address ?? '', '', 'CH',
-    Number(invoice.total).toFixed(2), 'CHF',
-    '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-    `Rechnung ${invoice.invoice_number}`, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+    'SPC',
+    '0200',
+    '1',
+    'CH1300253253103333M1H',
+    'S',
+    'Matteo Mora',
+    'Alt Ferrachstrasse',
+    '37',
+    '8630',
+    'Rüti',
+    'CH',
+    '', '', '', '', '', '', '',
+    Number(invoice.total).toFixed(2),
+    'CHF',
+    'K',
+    customer?.name ?? '',
+    customer?.address ?? '',
+    '',
+    'CH',
+    'NON',
+    `Rechnung ${invoice.invoice_number}`,
     'EPD',
   ].join('\n');
 }
@@ -111,15 +125,15 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   doc.setTextColor(...BRAND.text);
   ['MoraWebsoft', '8630 Rüti ZH', 'matteo@morawebsoft.com'].forEach(line => { doc.text(line, margin, y); y += 5; });
 
-  const custY = divY + 15;
-  const custLines: string[] = [];
-  if (invoice.admin_customers?.company) custLines.push(invoice.admin_customers.company);
-  if (invoice.admin_customers?.email)   custLines.push(invoice.admin_customers.email);
-  if (invoice.admin_customers?.address) custLines.push(invoice.admin_customers.address);
-  custLines.forEach((line, i) => doc.text(line, toX, custY + i * 5));
+  const customerLines: string[] = [];
+  if (invoice.admin_customers?.company) customerLines.push(invoice.admin_customers.company);
+  if (invoice.admin_customers?.address) customerLines.push(invoice.admin_customers.address);
+  if (invoice.admin_customers?.email) customerLines.push(invoice.admin_customers.email);
+  const customerStartY = divY + 25;
+  customerLines.forEach((line, i) => doc.text(line, toX, customerStartY + i * 5));
 
   // ── ITEMS TABLE ──────────────────────────────────────────────────────────
-  const tableY = Math.max(y, custY + custLines.length * 5) + 8;
+  const tableY = Math.max(y, customerStartY + customerLines.length * 5) + 8;
 
   doc.setFillColor(245, 247, 250);
   doc.rect(margin, tableY, contentW, 8, 'F');
@@ -253,14 +267,15 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   doc.text('Empfangsschein', margin, 50);
   doc.text('Zahlteil', 94, 50);
   doc.setDrawColor(...BRAND.light);
-  doc.line(86, 44, 86, 119);
+  doc.line(86, 44, 86, 125);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...BRAND.muted);
   doc.text('Zahlungsempfänger', margin, 59);
   doc.setTextColor(...BRAND.text);
-  doc.text('MoraWebsoft', margin, 66);
-  doc.text('8630 Rüti ZH, Schweiz', margin, 72);
+  doc.text('Matteo Mora', margin, 66);
+  doc.text('Alt Ferrachstrasse 37', margin, 72);
+  doc.text('8630 Rüti, Schweiz', margin, 78);
   doc.setTextColor(...BRAND.muted);
   doc.text('Betrag', margin, 84);
   doc.setFont('helvetica', 'bold');
@@ -268,9 +283,9 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   doc.text(formatCHF(invoice.total), margin, 91);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...BRAND.muted);
-  doc.text('Mitteilung', margin, 103);
+  doc.text('Mitteilung', margin, 109);
   doc.setTextColor(...BRAND.text);
-  doc.text(`Rechnung ${invoice.invoice_number}`, margin, 110);
+  doc.text(`Rechnung ${invoice.invoice_number}`, margin, 116);
 
   if (swissQr) {
     doc.addImage(swissQr, 'PNG', 145, 64, 46, 46);
@@ -286,8 +301,9 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   doc.setTextColor(...BRAND.muted);
   doc.text('Scannen Sie den QR-Code mit Ihrer Banking-App.', 94, 59);
   doc.setTextColor(...BRAND.text);
-  doc.text('MoraWebsoft', 94, 68);
-  doc.text('8630 Rüti ZH, Schweiz', 94, 74);
+  doc.text('Matteo Mora', 94, 68);
+  doc.text('Alt Ferrachstrasse 37', 94, 74);
+  doc.text('8630 Rüti, Schweiz', 94, 80);
   doc.setFont('helvetica', 'bold');
   doc.text(formatCHF(invoice.total), 94, 106);
 
