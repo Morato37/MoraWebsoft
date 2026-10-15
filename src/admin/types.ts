@@ -5,6 +5,11 @@ export interface Customer {
   email: string;
   phone: string;
   address: string;
+  street: string;
+  house_number: string;
+  postal_code: string;
+  town: string;
+  country: string;
   notes: string;
   created_at: string;
 }
@@ -103,6 +108,17 @@ export interface Invoice {
   total: number;
   notes: string;
   created_at: string;
-  admin_customers?: { name: string; company: string; email?: string; address?: string; phone?: string };
+  admin_customers?: {
+    name: string;
+    company: string;
+    email?: string;
+    address?: string;
+    phone?: string;
+    street?: string;
+    house_number?: string;
+    postal_code?: string;
+    town?: string;
+    country?: string;
+  };
   admin_invoice_items?: InvoiceItem[];
 }

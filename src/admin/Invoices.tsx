@@ -49,11 +49,12 @@ export default function Invoices() {
   });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState('');
 
   const load = async () => {
     setLoading(true);
     const [{ data: inv }, { data: c }, { data: o }] = await Promise.all([
-      supabase.from('admin_invoices').select('*, admin_customers(name, company), admin_invoice_items(*)').order('created_at', { ascending: false }),
+      supabase.from('admin_invoices').select('*, admin_customers(name, company, email, address, phone, street, house_number, postal_code, town, country), admin_invoice_items(*)').order('created_at', { ascending: false }),
       supabase.from('admin_customers').select('id, name, company').order('name'),
       supabase.from('admin_orders').select('id, title, customer_id').order('created_at', { ascending: false }),
     ]);
@@ -116,12 +117,14 @@ export default function Invoices() {
   };
 
   const downloadPdf = async (inv: Invoice) => {
+    setPdfError('');
     try {
       const { data: items } = await supabase.from('admin_invoice_items').select('*').eq('invoice_id', inv.id);
       const { data: customer } = await supabase.from('admin_customers').select('*').eq('id', inv.customer_id).maybeSingle();
       await openInvoicePdf({ ...inv, admin_customers: customer ?? undefined, admin_invoice_items: items ?? [] }, items ?? []);
     } catch (err) {
-      console.error('PDF download failed:', err);
+      const message = err instanceof Error ? err.message : 'Die PDF konnte nicht erstellt werden.';
+      setPdfError(message);
     }
   };
 
@@ -143,6 +146,8 @@ export default function Invoices() {
           <Plus size={14} /> Neue Rechnung
         </button>
       </div>
+
+      {pdfError && <p className="mb-4 rounded-lg border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200">{pdfError}</p>}
 
       {loading ? (
         <div className="text-white/30 font-mono text-sm">Laden...</div>

@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import type { Invoice, InvoiceItem } from './types';
+import { buildSwissQrPayload, formatQrAmount, CREDITOR } from './swissQr';
 
 const BRAND = {
   cyan:  [0, 188, 212]    as [number, number, number],
@@ -12,23 +13,6 @@ const BRAND = {
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('de-CH', { day: 'numeric', month: 'numeric', year: 'numeric' });
-}
-
-function formatCHF(value: number): string {
-  return `CHF ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, "'")}`;
-}
-
-async function generateQR(text: string, width = 160): Promise<string | null> {
-  try {
-    return await QRCode.toDataURL(text, {
-      width,
-      margin: 4,
-      errorCorrectionLevel: 'H',
-      color: { dark: '#000000', light: '#ffffff' },
-    });
-  } catch {
-    return null;
-  }
 }
 
 async function loadPublicImage(path: string): Promise<string | null> {
@@ -47,33 +31,29 @@ async function loadPublicImage(path: string): Promise<string | null> {
   }
 }
 
-function buildSwissQrPayload(invoice: Invoice): string {
-  const customer = invoice.admin_customers;
-  return [
-    'SPC',
-    '0200',
-    '1',
-    'CH1300253253103333M1H',
-    'S',
-    'Matteo Mora',
-    'Alt Ferrachstrasse',
-    '37',
-    '8630',
-    'Rüti',
-    'CH',
-    '', '', '', '', '', '', '',
-    Number(invoice.total).toFixed(2),
-    'CHF',
-    'K',
-    customer?.name ?? '',
-    customer?.address ?? '',
-    '',
-    'CH',
-    'NON',
-    '',
-    `Rechnung ${invoice.invoice_number}`,
-    'EPD',
-  ].join('\n');
+function drawSwissQr(doc: jsPDF, payload: string, x: number, y: number): void {
+  const qr = QRCode.create(payload, { errorCorrectionLevel: 'M' });
+  const moduleSize = 46 / qr.modules.size;
+  doc.setFillColor(0, 0, 0);
+  for (let row = 0; row < qr.modules.size; row += 1) {
+    let start = -1;
+    for (let col = 0; col <= qr.modules.size; col += 1) {
+      const dark = col < qr.modules.size && qr.modules.get(row, col);
+      if (dark && start < 0) start = col;
+      if ((!dark || col === qr.modules.size) && start >= 0) {
+        doc.rect(x + start * moduleSize, y + row * moduleSize, (col - start) * moduleSize, moduleSize, 'F');
+        start = -1;
+      }
+    }
+  }
+  const center = 23;
+  doc.setFillColor(255, 255, 255);
+  doc.rect(x + center - 3.5, y + center - 3.5, 7, 7, 'F');
+  doc.setFillColor(0, 0, 0);
+  doc.rect(x + center - 3, y + center - 3, 6, 6, 'F');
+  doc.setFillColor(255, 255, 255);
+  doc.rect(x + center - 1.95, y + center - 0.585, 3.9, 1.17, 'F');
+  doc.rect(x + center - 0.585, y + center - 1.95, 1.17, 3.9, 'F');
 }
 
 export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Promise<void> {
@@ -85,11 +65,24 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   const ETH_ADDR = '0x444920D5A72F2CA91E876781e3302549eF8926cB';
   const SOL_ADDR = 'DGR7BisMWvG3aXshFRLVq2H8mjSCDrfJCGxnu1PdgK2F';
 
-  const [ethQr, solQr, swissQr] = await Promise.all([
+  const swissPayload = buildSwissQrPayload({
+    invoiceNumber: invoice.invoice_number,
+    total: Number(invoice.total),
+    customer: invoice.admin_customers ? {
+      name: invoice.admin_customers.name,
+      company: invoice.admin_customers.company,
+      street: invoice.admin_customers.street ?? '',
+      house_number: invoice.admin_customers.house_number ?? '',
+      postal_code: invoice.admin_customers.postal_code ?? '',
+      town: invoice.admin_customers.town ?? '',
+      country: invoice.admin_customers.country ?? 'CH',
+    } : null,
+  });
+  console.info('[Swiss QR payload]\n' + swissPayload.split('\n').map((line, index) => `${index + 1}: ${line}`).join('\n'));
+  const [ethQr, solQr] = await Promise.all([
     loadPublicImage('/eth-qr.png'),
     loadPublicImage('/sol-qr.png'),
-    generateQR(buildSwissQrPayload(invoice), 520),
-  ]) as [string | null, string | null, string | null];
+  ]) as [string | null, string | null];
 
   // ── HEADER ──────────────────────────────────────────────────────────────
   doc.setFont('helvetica', 'bold');
@@ -263,108 +256,76 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   rowY += 10;
 
   doc.addPage();
-  doc.setDrawColor(...BRAND.text);
-  doc.setLineWidth(0.35);
-  doc.line(margin, 10, W - margin, 10);
-  doc.line(86, 10, 86, 287);
+  const qrLines = swissPayload.split('\n');
+  const ibanPrinted = qrLines[3].replace(/(.{4})/g, '$1 ').trim();
+  const referencePrinted = qrLines[28].replace(/(.{4})/g, '$1 ').trim();
+  const customer = invoice.admin_customers;
+  const customerName = customer?.company || customer?.name || '';
+  const customerAddress = customer?.street ? `${customer.street}${customer.house_number ? ` ${customer.house_number}` : ''}` : '';
+  const customerTown = customer?.postal_code && customer?.town ? `${customer.postal_code} ${customer.town}` : '';
+  const hasCustomerAddress = Boolean(customerName && customer?.postal_code && customer?.town && customer?.country);
+  const paymentX = 67;
+  const detailsX = 118;
+  const detailsWidth = 87;
+  const receiptX = 5;
+  const receiptWidth = 52;
+  const drawCornerField = (x: number, y: number, width: number, height: number) => {
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.75);
+    const corner = 3;
+    doc.line(x, y, x + corner, y); doc.line(x, y, x, y + corner);
+    doc.line(x + width, y, x + width - corner, y); doc.line(x + width, y, x + width, y + corner);
+    doc.line(x, y + height, x + corner, y + height); doc.line(x, y + height, x, y + height - corner);
+    doc.line(x + width, y + height, x + width - corner, y + height); doc.line(x + width, y + height, x + width, y + height - corner);
+  };
+  const textBlock = (label: string, lines: string[], x: number, y: number, width: number, valueSize: number) => {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(0, 0, 0); doc.text(label, x, y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(valueSize);
+    doc.text(doc.splitTextToSize(lines.filter(Boolean).join('\n'), width), x, y + 4);
+  };
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(...BRAND.text);
-  doc.text('Empfangsschein', margin, 24);
-  doc.text('Zahlteil', 94, 24);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.text(`Rechnung ${invoice.invoice_number}`, 94, 30);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...BRAND.text);
-  doc.text('Konto / Zahlbar an', margin, 38);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.text('CH13 0025 3253 1033 33M1 H', margin, 45);
-  doc.text('Matteo Mora', margin, 51);
-  doc.text('Alt Ferrachstrasse 37', margin, 57);
-  doc.text('8630 Rüti', margin, 63);
-
-  doc.setFont('helvetica', 'bold');
-  doc.text('Zahlbar durch', margin, 82);
-  doc.setFont('helvetica', 'normal');
-  const payerLines = [invoice.admin_customers?.name, invoice.admin_customers?.address].filter(Boolean) as string[];
-  payerLines.forEach((line, index) => doc.text(line, margin, 89 + index * 6));
-
-  doc.setFont('helvetica', 'bold');
-  doc.text('Währung', margin, 145);
-  doc.text('Betrag', 55, 145);
-  doc.setFont('helvetica', 'normal');
-  doc.text('CHF', margin, 152);
-  doc.text(formatCHF(invoice.total).replace('CHF ', ''), 55, 152);
-  doc.setFontSize(7);
-  doc.text('Annahmestelle', 55, 178);
-
-  if (swissQr) {
-    doc.addImage(swissQr, 'PNG', 94, 38, 58, 58);
-  }
-
-  const infoX = 158;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...BRAND.text);
-  doc.text('Konto / Zahlbar an', infoX, 40);
-  doc.setFont('helvetica', 'normal');
-  doc.text('CH13 0025 3253 1033 33M1 H', infoX, 46);
-  doc.text('Matteo Mora', infoX, 52);
-  doc.text('Alt Ferrachstrasse 37', infoX, 58);
-  doc.text('8630 Rüti', infoX, 64);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Betrag', infoX, 78);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`CHF ${Number(invoice.total).toFixed(2)}`, infoX, 84);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Zusätzliche Informationen', infoX, 100);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Rechnung ${invoice.invoice_number}`, infoX, 106);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Zahlbar durch', infoX, 122);
-  doc.setFont('helvetica', 'normal');
-  payerLines.forEach((line, index) => doc.text(line, infoX, 128 + index * 6));
-
-  doc.setDrawColor(...BRAND.light);
-  doc.line(margin, 190, W - margin, 190);
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.2);
+  doc.line(0, 192, 210, 192);
+  doc.line(62, 192, 62, 297);
+  doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(...BRAND.text);
-  doc.text('Crypto-Zahlungen', margin, 202);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...BRAND.muted);
-  doc.text('Alternativ können Sie den Rechnungsbetrag an eine der folgenden Adressen senden.', margin, 209);
+  doc.text('Empfangsschein', receiptX, 197);
+  doc.text('Zahlteil', paymentX, 197);
 
-  const qrSize = 26;
-  const cryptoY = 220;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...BRAND.text);
-  doc.text('ETH', margin, cryptoY);
-  doc.text('SOL', margin + 70, cryptoY);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(...BRAND.muted);
-  doc.text(ETH_ADDR, margin, cryptoY + 5);
-  doc.text(SOL_ADDR, margin + 70, cryptoY + 5);
-  if (ethQr) doc.addImage(ethQr, 'PNG', margin, cryptoY + 10, qrSize, qrSize);
-  if (solQr) doc.addImage(solQr, 'PNG', margin + 70, cryptoY + 10, qrSize, qrSize);
+  textBlock('Konto / Zahlbar an', [ibanPrinted, CREDITOR.name, `${CREDITOR.street} ${CREDITOR.houseNumber}`, `${CREDITOR.postalCode} ${CREDITOR.town}`], receiptX, 204, receiptWidth, 8);
+  textBlock('Referenz', [referencePrinted], receiptX, 229, receiptWidth, 8);
+  if (hasCustomerAddress) {
+    textBlock('Zahlbar durch', [customerName, customerAddress, customerTown], receiptX, 242, receiptWidth, 8);
+  } else {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(6); doc.text('Zahlbar durch (Name/Adresse)', receiptX, 242);
+    drawCornerField(receiptX, 246, receiptWidth, 20);
+  }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(6); doc.text('Währung', receiptX, 270); doc.text('Betrag', 17, 270);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.text('CHF', receiptX, 275); doc.text(formatQrAmount(Number(invoice.total)), 17, 275);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(6); doc.text('Annahmestelle', 57, 280, { align: 'right' });
 
-  // ── FOOTER ───────────────────────────────────────────────────────────────
-  const footerY = 287;
-  doc.setDrawColor(...BRAND.light);
-  doc.setLineWidth(0.3);
-  doc.line(margin, footerY - 4, W - margin, footerY - 4);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...BRAND.muted);
-  doc.text('MoraWebsoft · matteo@morawebsoft.com · 8630 Rüti ZH', W / 2, footerY, { align: 'center' });
+  drawSwissQr(doc, swissPayload, paymentX, 209);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text('Währung', paymentX, 260); doc.text('Betrag', 80, 260);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text('CHF', paymentX, 266); doc.text(formatQrAmount(Number(invoice.total)), 80, 266);
+  textBlock('Konto / Zahlbar an', [ibanPrinted, CREDITOR.name, `${CREDITOR.street} ${CREDITOR.houseNumber}`, `${CREDITOR.postalCode} ${CREDITOR.town}`], detailsX, 199, detailsWidth, 10);
+  textBlock('Referenz', [referencePrinted], detailsX, 224, detailsWidth, 10);
+  textBlock('Zusätzliche Informationen', [`Rechnung ${invoice.invoice_number}`], detailsX, 237, detailsWidth, 10);
+  if (hasCustomerAddress) {
+    textBlock('Zahlbar durch', [customerName, customerAddress, customerTown], detailsX, 250, detailsWidth, 10);
+  } else {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text('Zahlbar durch (Name/Adresse)', detailsX, 250);
+    drawCornerField(detailsX, 254, 65, 25);
+  }
+
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.2);
+  doc.line(20, 185, 190, 185);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(0, 0, 0); doc.text('Krypto-Zahlungen', 20, 177);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.text(ETH_ADDR, 20, 181); doc.text(SOL_ADDR, 110, 181);
+  if (ethQr) doc.addImage(ethQr, 'PNG', 20, 126, 28, 28);
+  if (solQr) doc.addImage(solQr, 'PNG', 110, 126, 28, 28);
 
   doc.save(`${invoice.invoice_number}.pdf`);
 }

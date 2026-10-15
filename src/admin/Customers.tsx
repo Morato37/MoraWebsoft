@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Customer } from './types';
-import { Plus, Pencil, Trash2, X, Check, User, Building, Mail, Phone, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, User, Building, Mail, Phone, MapPin, Sparkles } from 'lucide-react';
 
 const empty: Omit<Customer, 'id' | 'created_at'> = {
-  name: '', company: '', email: '', phone: '', address: '', notes: '',
+  name: '', company: '', email: '', phone: '', address: '', street: '', house_number: '', postal_code: '', town: '', country: 'CH', notes: '',
 };
+
+const COUNTRIES = [
+  ['CH', 'Schweiz'], ['LI', 'Liechtenstein'], ['DE', 'Deutschland'], ['AT', 'Österreich'], ['FR', 'Frankreich'], ['IT', 'Italien'],
+] as const;
 
 const INPUT = 'w-full bg-[#12122a] border border-white/8 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400/40 transition-colors';
 
@@ -17,6 +21,7 @@ export default function Customers() {
   });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [formError, setFormError] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -27,11 +32,34 @@ export default function Customers() {
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => setModal({ open: true, data: { ...empty } });
-  const openEdit = (c: Customer) => setModal({ open: true, data: { name: c.name, company: c.company, email: c.email, phone: c.phone, address: c.address, notes: c.notes }, id: c.id });
-  const closeModal = () => setModal({ open: false, data: { ...empty } });
+  const openCreate = () => { setFormError(''); setModal({ open: true, data: { ...empty } }); };
+  const openEdit = (c: Customer) => {
+    setFormError('');
+    setModal({ open: true, data: { name: c.name, company: c.company, email: c.email, phone: c.phone, address: c.address, street: c.street, house_number: c.house_number, postal_code: c.postal_code, town: c.town, country: c.country || 'CH', notes: c.notes }, id: c.id });
+  };
+  const closeModal = () => { setFormError(''); setModal({ open: false, data: { ...empty } }); };
+
+  const suggestStructuredAddress = () => {
+    const parts = modal.data.address.split(/[\n,]+/).map(part => part.trim()).filter(Boolean);
+    const postalIndex = parts.findIndex(part => /^(\d{4,5})\s+(.+)$/.test(part));
+    const postalMatch = postalIndex >= 0 ? parts[postalIndex].match(/^(\d{4,5})\s+(.+)$/) : null;
+    const streetPart = parts.find(part => /^Postfach\s+\d+/i.test(part)) ?? parts.find(part => /^(.+?)\s+\d+[a-zA-Z]?(?:[-\/]\d+[a-zA-Z]?)?$/.test(part));
+    const streetMatch = streetPart && !/^Postfach\s+\d+/i.test(streetPart) ? streetPart.match(/^(.+?)\s+(\d+[a-zA-Z]?(?:[-\/]\d+[a-zA-Z]?)?)$/) : null;
+    setModal(current => ({ ...current, data: {
+      ...current.data,
+      street: streetPart && /^Postfach\s+\d+/i.test(streetPart) ? streetPart : streetMatch?.[1] ?? current.data.street,
+      house_number: streetMatch?.[2] ?? (streetPart && /^Postfach\s+\d+/i.test(streetPart) ? '' : current.data.house_number),
+      postal_code: postalMatch?.[1] ?? current.data.postal_code,
+      town: postalMatch?.[2] ?? current.data.town,
+    } }));
+    setFormError(postalMatch || streetPart ? 'Adresse vorgeschlagen. Bitte prüfen und speichern.' : 'Die Freitext-Adresse konnte nicht automatisch erkannt werden.');
+  };
 
   const save = async () => {
+    if (modal.data.street && (!modal.data.postal_code || !modal.data.town)) {
+      setFormError('Wenn eine Strasse eingetragen ist, müssen PLZ und Ort ebenfalls ausgefüllt sein.');
+      return;
+    }
     setSaving(true);
     if (modal.id) {
       await supabase.from('admin_customers').update(modal.data).eq('id', modal.id);
@@ -115,11 +143,29 @@ export default function Customers() {
               <button onClick={closeModal} className="text-white/30 hover:text-white transition-colors"><X size={18} /></button>
             </div>
             <div className="space-y-4">
+              {formError && <p className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">{formError}</p>}
               {field('name', 'Name', <User size={13} />)}
               {field('company', 'Firma', <Building size={13} />)}
               {field('email', 'E-Mail', <Mail size={13} />, 'email')}
               {field('phone', 'Telefon', <Phone size={13} />)}
-              {field('address', 'Adresse', <MapPin size={13} />)}
+              {field('address', 'Adresse (Freitext)', <MapPin size={13} />)}
+              <button type="button" onClick={suggestStructuredAddress} className="flex items-center gap-2 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors">
+                <Sparkles size={13} /> Adresse aus Freitext übernehmen
+              </button>
+              <div className="grid grid-cols-[1fr_110px] gap-3">
+                {field('street', 'Strasse / Postfach', <MapPin size={13} />)}
+                {field('house_number', 'Hausnummer', <MapPin size={13} />)}
+              </div>
+              <div className="grid grid-cols-[110px_1fr] gap-3">
+                {field('postal_code', 'PLZ', <MapPin size={13} />)}
+                {field('town', 'Ort', <MapPin size={13} />)}
+              </div>
+              <div>
+                <label className="block font-mono text-xs text-white/35 mb-1.5 tracking-wider uppercase">Land</label>
+                <select value={modal.data.country} onChange={e => setModal(m => ({ ...m, data: { ...m.data, country: e.target.value } }))} className={INPUT}>
+                  {COUNTRIES.map(([code, label]) => <option key={code} value={code}>{code} — {label}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="block font-mono text-xs text-white/35 mb-1.5 tracking-wider uppercase">Notizen</label>
                 <textarea
