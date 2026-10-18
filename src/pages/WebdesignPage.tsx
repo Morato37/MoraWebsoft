@@ -62,10 +62,6 @@ export default function WebdesignPage() {
         'Betreuung ab CHF 49 pro Monat',
       ]}
       note="Was Sie liefern: Logo, Texte oder Stichworte, Fotos. Keine Fotos? Ich vermittle einen Fotografen aus der Region."
-      beforeAfter={[
-        { before: '/images/vorher-1.jpg', after: 'https://image.thum.io/get/width/1200/https://it-company.bolt.host/' },
-        { before: '/images/vorher-2.jpg', after: 'https://image.thum.io/get/width/1200/https://kaleidoscopic-kitten-e2ec36.netlify.app/' },
-      ]}
       faq={[
         {
           question: 'Wie lange dauert es?',
