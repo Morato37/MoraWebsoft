@@ -3,16 +3,26 @@ import { supabase } from '../lib/supabase';
 import AdminLogin from './AdminLogin';
 import AdminDashboard from './AdminDashboard';
 
+const ADMIN_USER_ID = '053bdf71-bd10-4589-bd9a-4d0dac1a3053';
+
 export default function Admin() {
   const [session, setSession] = useState<boolean | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(!!data.session);
+    supabase.auth.getSession().then(async ({ data }) => {
+      const isAdmin = data.session?.user.id === ADMIN_USER_ID;
+      if (data.session && !isAdmin) {
+        await supabase.auth.signOut();
+      }
+      setSession(isAdmin);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      (() => { setSession(!!s); })();
+      const isAdmin = s?.user.id === ADMIN_USER_ID;
+      setSession(isAdmin);
+      if (s && !isAdmin) {
+        void supabase.auth.signOut();
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -27,7 +37,7 @@ export default function Admin() {
   }
 
   if (!session) {
-    return <div className="admin-area"><AdminLogin onLogin={() => setSession(true)} /></div>;
+    return <div className="admin-area"><AdminLogin /></div>;
   }
 
   return <div className="admin-area"><AdminDashboard onLogout={() => setSession(false)} /></div>;

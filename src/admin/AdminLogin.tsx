@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Terminal, Mail, Lock } from 'lucide-react';
 
-interface Props {
-  onLogin: () => void;
-}
-
-export default function AdminLogin({ onLogin }: Props) {
+export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,8 +16,6 @@ export default function AdminLogin({ onLogin }: Props) {
     setLoading(false);
     if (err) {
       setError('Anmeldung fehlgeschlagen. Bitte prüfen Sie Ihre Zugangsdaten.');
-    } else {
-      onLogin();
     }
   };
 
