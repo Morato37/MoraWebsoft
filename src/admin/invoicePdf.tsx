@@ -224,7 +224,7 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND.text);
-    doc.text(noteLines, margin + 4, rowY + 11, { lineHeightFactor: lineHeight / 9 });
+    doc.text(noteLines, margin + 4, rowY + 11, { lineHeightFactor: 1.15 });
     rowY += notesHeight + 6;
   }
 
