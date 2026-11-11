@@ -153,7 +153,7 @@ export function openQuotePdf(quote: Quote): void {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND.text);
-    doc.text('Zwischensumme ohne optionale Positionen', totalsX, y, { align: 'right' });
+    doc.text('Zwischensumme ohne Optionen', totalsX, y, { align: 'right' });
     doc.setTextColor(...BRAND.cyan);
     doc.text(formatCHF(requiredSubtotal), width - margin, y, { align: 'right' });
     y += 8;
