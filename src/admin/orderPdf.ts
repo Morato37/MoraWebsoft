@@ -142,7 +142,7 @@ export function downloadOrderPdf(order: Order): void {
       doc.setFont('helvetica', bold ? 'bold' : 'normal');
       doc.setFontSize(bold ? 11 : 9);
       doc.setTextColor(...(bold ? BRAND.text : BRAND.muted));
-      doc.text(label, totalsX, y);
+      doc.text(label, totalsX, y, { align: 'right' });
       doc.setTextColor(...(bold ? BRAND.cyan : BRAND.text));
       doc.text(value, width - margin, y, { align: 'right' });
       y += bold ? 8 : 6;

@@ -189,7 +189,7 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
     doc.setFont('helvetica', bold ? 'bold' : 'normal');
     doc.setFontSize(bold ? 10 : 9);
     doc.setTextColor(...BRAND.muted);
-    doc.text(label, totalsX, rowY);
+    doc.text(label, totalsX, rowY, { align: 'right' });
     doc.setTextColor(bold ? BRAND.cyan[0] : BRAND.text[0], bold ? BRAND.cyan[1] : BRAND.text[1], bold ? BRAND.cyan[2] : BRAND.text[2]);
     doc.text(value, W - margin, rowY, { align: 'right' });
     rowY += bold ? 8 : 6;
