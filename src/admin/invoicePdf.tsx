@@ -196,7 +196,6 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   };
 
   addRow('Zwischensumme', `CHF ${Number(invoice.subtotal).toFixed(2)}`);
-  addRow(`MwSt. ${invoice.tax_rate}%`, `CHF ${Number(invoice.tax_amount).toFixed(2)}`);
   doc.setDrawColor(...BRAND.light);
   doc.line(totalsX, rowY - 2, W - margin, rowY - 2);
   rowY += 2;
@@ -208,6 +207,12 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
   doc.setTextColor(...BRAND.cyan);
   doc.text(`CHF ${Number(invoice.total).toFixed(2)}`, W - margin, rowY, { align: 'right' });
   rowY += 12;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Nicht mehrwertsteuerpflichtig.', margin, rowY);
+  rowY += 6;
 
   // ── NOTES ────────────────────────────────────────────────────────────────
   if (invoice.notes) {

@@ -173,11 +173,16 @@ export function openQuotePdf(quote: Quote): void {
   };
   addTotal('Zwischensumme inkl. Optionen', formatCHF(Number(quote.subtotal)));
   addTotal('Rabatt', `- ${formatCHF(Number(quote.discount_amount))}`);
-  addTotal(`MwSt. ${quote.tax_rate}%`, formatCHF(Number(quote.tax_amount)));
   doc.setDrawColor(...BRAND.light);
   doc.line(totalsX, y - 2, width - margin, y - 2);
   y += 3;
   addTotal('Gesamtbetrag', formatCHF(Number(quote.total)), true);
+
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...BRAND.muted);
+  doc.text('Nicht mehrwertsteuerpflichtig.', margin, y);
 
   if (quote.notes) {
     y += 8;

@@ -151,11 +151,16 @@ export function downloadOrderPdf(order: Order): void {
     if (Number(order.discount_amount) > 0) {
       addTotal('Rabatt', `- ${formatCHF(Number(order.discount_amount))}`);
     }
-    addTotal(`MwSt. ${order.tax_rate}%`, formatCHF(Number(order.tax_amount)));
     doc.setDrawColor(...BRAND.light);
     doc.line(totalsX, y - 2, width - margin, y - 2);
     y += 3;
     addTotal('Gesamtbetrag', formatCHF(Number(order.total)), true);
+
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...BRAND.muted);
+    doc.text('Nicht mehrwertsteuerpflichtig.', margin, y);
   }
 
   // ── NOTES ────────────────────────────────────────────────────────────────
