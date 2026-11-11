@@ -211,9 +211,12 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
 
   // ── NOTES ────────────────────────────────────────────────────────────────
   if (invoice.notes) {
+    const noteLines = doc.splitTextToSize(invoice.notes, contentW - 8) as string[];
+    const lineHeight = 4.5;
+    const notesHeight = Math.max(14, 10 + noteLines.length * lineHeight);
     doc.setDrawColor(...BRAND.light);
     doc.setLineWidth(0.3);
-    doc.roundedRect(margin, rowY, contentW, 14, 2, 2, 'S');
+    doc.roundedRect(margin, rowY, contentW, notesHeight, 2, 2, 'S');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(...BRAND.muted);
@@ -221,8 +224,8 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(...BRAND.text);
-    doc.text(invoice.notes, margin + 4, rowY + 11);
-    rowY += 20;
+    doc.text(noteLines, margin + 4, rowY + 11, { lineHeightFactor: lineHeight / 9 });
+    rowY += notesHeight + 6;
   }
 
   doc.addPage();

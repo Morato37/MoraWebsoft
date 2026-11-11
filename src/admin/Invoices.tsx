@@ -294,7 +294,16 @@ export default function Invoices() {
 
             <div>
               <label className="block font-mono text-xs text-white/35 mb-1.5 tracking-wider uppercase">Notizen</label>
-              <textarea value={modal.data.notes} onChange={e => setModal(m => ({ ...m, data: { ...m.data, notes: e.target.value } }))} rows={2} className={`${INPUT} resize-none`} />
+              <textarea
+                value={modal.data.notes}
+                onChange={e => {
+                  e.currentTarget.style.height = 'auto';
+                  e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                  setModal(m => ({ ...m, data: { ...m.data, notes: e.target.value } }));
+                }}
+                rows={2}
+                className={`${INPUT} min-h-[72px] resize-none overflow-hidden`}
+              />
             </div>
 
             <div className="flex gap-3 mt-6">
