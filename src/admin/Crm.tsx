@@ -36,6 +36,26 @@ interface CvRecord {
 
 type CrmRecord = LeadRecord | CvRecord;
 
+type ManualLeadForm = {
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  service: string;
+  message: string;
+  notes: string;
+};
+
+const EMPTY_MANUAL_LEAD: ManualLeadForm = {
+  name: '',
+  company: '',
+  email: '',
+  phone: '',
+  service: '',
+  message: '',
+  notes: '',
+};
+
 const STATUS_OPTIONS = ['neu', 'in_bearbeitung', 'qualifiziert', 'gewonnen', 'abgeschlossen', 'verloren'];
 const statusLabels: Record<string, string> = {
   neu: 'Neu',
@@ -72,6 +92,8 @@ export default function Crm() {
   const [selected, setSelected] = useState<CrmRecord | null>(null);
   const [saving, setSaving] = useState(false);
   const [customerSaved, setCustomerSaved] = useState(false);
+  const [newLeadOpen, setNewLeadOpen] = useState(false);
+  const [newLead, setNewLead] = useState<ManualLeadForm>({ ...EMPTY_MANUAL_LEAD });
 
   const load = async () => {
     setLoading(true);
@@ -156,6 +178,38 @@ export default function Crm() {
     setSaving(false);
   };
 
+  const createLead = async () => {
+    if (!newLead.name.trim() || !newLead.email.trim()) {
+      setError('Bitte mindestens Name und E-Mail ausfüllen.');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    const { error: insertError } = await supabase.from('admin_leads').insert({
+      name: newLead.name.trim(),
+      firma: newLead.company.trim(),
+      email: newLead.email.trim(),
+      telefon: newLead.phone.trim(),
+      leistung: newLead.service.trim(),
+      nachricht: newLead.message.trim(),
+      quelle: 'manuell',
+      notizen: newLead.notes.trim(),
+      status: 'neu',
+    });
+
+    if (insertError) {
+      setError('Der neue Lead konnte nicht gespeichert werden.');
+      setSaving(false);
+      return;
+    }
+
+    setNewLead({ ...EMPTY_MANUAL_LEAD });
+    setNewLeadOpen(false);
+    setSaving(false);
+    await load();
+  };
+
   const saveAsCustomer = async (record: CrmRecord) => {
     setSaving(true);
     setCustomerSaved(false);
@@ -170,6 +224,16 @@ export default function Crm() {
       setError('Der Kontakt konnte nicht als Kunde gespeichert werden.');
     } else {
       setCustomerSaved(true);
+      if (record.source === 'kontakt') {
+        const { error: statusError } = await supabase.from('admin_leads').update({ status: 'gewonnen' }).eq('id', record.id);
+        if (statusError) {
+          setError('Der Kunde wurde angelegt, aber der Lead-Status konnte nicht aktualisiert werden.');
+        } else {
+          const updated = { ...record, status: 'gewonnen' } as CrmRecord;
+          setRecords(current => current.map(item => item.id === record.id && item.source === record.source ? updated : item));
+          setSelected(updated);
+        }
+      }
     }
     setSaving(false);
   };
@@ -181,7 +245,10 @@ export default function Crm() {
           <h2 className="text-xl font-bold text-white">CRM</h2>
           <p className="mt-1 text-sm text-slate-400">Alle Kontakt- und CV-Anfragen an einem Ort.</p>
         </div>
-        <button onClick={load} className="inline-flex items-center justify-center gap-2 self-start rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs font-mono text-slate-200 transition-colors hover:border-cyan-400 hover:text-cyan-300 lg:self-auto"><RefreshCw size={13} /> Aktualisieren</button>
+        <div className="flex flex-wrap gap-2 self-start lg:self-auto">
+          <button onClick={() => { setError(''); setNewLeadOpen(true); }} className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 py-2 text-xs font-bold text-slate-950 transition-colors hover:bg-cyan-300"><Plus size={13} /> Neuer Lead</button>
+          <button onClick={load} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs font-mono text-slate-200 transition-colors hover:border-cyan-400 hover:text-cyan-300"><RefreshCw size={13} /> Aktualisieren</button>
+        </div>
       </div>
 
       <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto]">
@@ -204,6 +271,25 @@ export default function Crm() {
         </div>
       )}
 
+      {newLeadOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Neuen Lead erfassen">
+        <div className="max-h-full w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl sm:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div><p className="font-mono text-xs uppercase tracking-widest text-cyan-300">CRM</p><h3 className="mt-2 text-2xl font-bold text-white">Neuen Lead erfassen</h3><p className="mt-1 text-sm text-slate-400">Lege einen Kontakt manuell in deiner Pipeline an.</p></div>
+            <button onClick={() => setNewLeadOpen(false)} className="rounded-lg border border-slate-600 p-2 text-slate-300 hover:border-cyan-400 hover:text-white" aria-label="Dialog schliessen"><X size={18} /></button>
+          </div>
+          <div className="mt-7 grid gap-4 sm:grid-cols-2">
+            <label className="block"><span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Name *</span><input value={newLead.name} onChange={e => setNewLead(current => ({ ...current, name: e.target.value }))} autoFocus className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" placeholder="Vor- und Nachname" /></label>
+            <label className="block"><span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Firma</span><input value={newLead.company} onChange={e => setNewLead(current => ({ ...current, company: e.target.value }))} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" placeholder="Unternehmen" /></label>
+            <label className="block"><span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">E-Mail *</span><input type="email" value={newLead.email} onChange={e => setNewLead(current => ({ ...current, email: e.target.value }))} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" placeholder="name@firma.ch" /></label>
+            <label className="block"><span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Telefon</span><input type="tel" value={newLead.phone} onChange={e => setNewLead(current => ({ ...current, phone: e.target.value }))} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" placeholder="+41 ..." /></label>
+            <label className="block sm:col-span-2"><span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Interessiert an</span><input value={newLead.service} onChange={e => setNewLead(current => ({ ...current, service: e.target.value }))} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" placeholder="z. B. Webdesign oder Automatisierung" /></label>
+            <label className="block sm:col-span-2"><span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Nachricht</span><textarea value={newLead.message} onChange={e => setNewLead(current => ({ ...current, message: e.target.value }))} rows={4} className="w-full resize-y rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-sm leading-6 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" placeholder="Worum geht es bei der Anfrage?" /></label>
+            <label className="block sm:col-span-2"><span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Interne Notizen</span><textarea value={newLead.notes} onChange={e => setNewLead(current => ({ ...current, notes: e.target.value }))} rows={3} className="w-full resize-y rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-sm leading-6 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none" placeholder="Nur für die interne Bearbeitung" /></label>
+          </div>
+          <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button onClick={() => setNewLeadOpen(false)} className="rounded-lg border border-slate-600 px-4 py-3 text-sm font-semibold text-slate-200 hover:border-slate-400">Abbrechen</button><button onClick={createLead} disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60"><Plus size={16} />{saving ? 'Wird gespeichert...' : 'Lead speichern'}</button></div>
+        </div>
+      </div>}
+
       {selected && <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-950/70 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="CRM-Details">
         <div className="h-full w-full max-w-xl overflow-y-auto border-l border-slate-700 bg-slate-900 p-6 shadow-2xl sm:p-8">
           <div className="flex items-start justify-between gap-4"><div><p className="font-mono text-xs uppercase tracking-widest text-cyan-300">{selected.source === 'cv' ? 'Online-CV Anfrage' : 'Kontaktanfrage'}</p><h3 className="mt-2 text-2xl font-bold text-white">{selected.name}</h3></div><button onClick={() => setSelected(null)} className="rounded-lg border border-slate-600 p-2 text-slate-300 hover:border-cyan-400 hover:text-white" aria-label="Details schliessen"><X size={18} /></button></div>
@@ -211,7 +297,7 @@ export default function Crm() {
           <div className="mt-6"><label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Status</label><div className="relative"><select value={selected.status} onChange={e => updateStatus(selected, e.target.value)} disabled={saving} className="w-full appearance-none rounded-lg border border-slate-600 bg-slate-950 px-3 py-3 text-sm font-semibold text-white focus:border-cyan-400 focus:outline-none">{STATUS_OPTIONS.map(status => <option key={status} value={status}>{statusLabels[status]}</option>)}</select><ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" /></div></div>
           <div className="mt-6 rounded-xl border border-slate-700 bg-slate-950 p-4"><p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Nachricht</p><p className="whitespace-pre-wrap text-sm leading-6 text-slate-200">{selected.message || 'Keine Nachricht hinterlassen.'}</p></div>
           {selected.source === 'cv' && <div className="mt-4 space-y-3"><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">CV-Angaben</p>{Object.entries(selected.details).filter(([, value]) => value).map(([label, value]) => <div key={label} className="flex justify-between gap-4 border-b border-slate-800 py-2 text-sm"><span className="text-slate-400">{label}</span><span className="text-right text-slate-100">{value}</span></div>)}{selected.files.length > 0 && <div className="pt-2"><p className="mb-2 text-xs text-slate-500">Dokumente über den Bereich „CV-Anfragen“ öffnen.</p></div>}</div>}
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row"><button onClick={() => saveAsCustomer(selected)} disabled={saving || customerSaved} className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60">{customerSaved ? <Check size={16} /> : <Plus size={16} />}{customerSaved ? 'Als Kunde gespeichert' : 'Als Kunde speichern'}</button><a href={`mailto:${selected.email}`} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-600 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300"><ExternalLink size={15} /> E-Mail schreiben</a></div>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row"><button onClick={() => saveAsCustomer(selected)} disabled={saving || customerSaved} className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-60">{customerSaved ? <Check size={16} /> : <Plus size={16} />}{customerSaved ? 'Kunde erstellt' : 'In Kunden umwandeln'}</button><a href={`mailto:${selected.email}`} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-600 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-300"><ExternalLink size={15} /> E-Mail schreiben</a></div>
         </div>
       </div>}
     </div>
