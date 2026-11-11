@@ -71,6 +71,7 @@ export interface QuoteItem {
   note: string;
   quantity: number;
   unit_price: number;
+  optional?: boolean;
 }
 
 export interface Quote {

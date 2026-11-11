@@ -96,8 +96,25 @@ export function openQuotePdf(quote: Quote): void {
     y += 8;
   };
 
-  drawTableHeader();
-  (quote.items ?? []).forEach((item, index) => {
+  const requiredItems = (quote.items ?? []).filter(item => !item.optional);
+  const optionalItems = (quote.items ?? []).filter(item => item.optional);
+  const requiredSubtotal = requiredItems.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unit_price), 0);
+  const totalsX = width - margin - 75;
+
+  const drawSectionLabel = (label: string) => {
+    if (y + 12 > 270) {
+      doc.addPage();
+      y = 20;
+      drawTableHeader();
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...BRAND.cyan);
+    doc.text(label, margin, y + 5);
+    y += 9;
+  };
+
+  const drawItem = (item: Quote['items'][number], index: number) => {
     const descriptionLines = doc.splitTextToSize(item.description, 78) as string[];
     const noteLines = item.note ? doc.splitTextToSize(item.note, 78) as string[] : [];
     const rowHeight = Math.max(9, (descriptionLines.length + noteLines.length) * 4 + 4);
@@ -126,10 +143,25 @@ export function openQuotePdf(quote: Quote): void {
     doc.setDrawColor(...BRAND.light);
     doc.line(margin, y + rowHeight, width - margin, y + rowHeight);
     y += rowHeight;
-  });
+  };
+
+  drawTableHeader();
+  requiredItems.forEach((item, index) => drawItem(item, index));
+
+  if (optionalItems.length > 0) {
+    y += 3;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND.text);
+    doc.text('Zwischensumme ohne optionale Positionen', totalsX, y);
+    doc.setTextColor(...BRAND.cyan);
+    doc.text(formatCHF(requiredSubtotal), width - margin, y, { align: 'right' });
+    y += 8;
+    drawSectionLabel('OPTIONALE POSITIONEN');
+    optionalItems.forEach((item, index) => drawItem(item, requiredItems.length + index));
+  }
 
   y += 8;
-  const totalsX = width - margin - 75;
   const addTotal = (label: string, value: string, bold = false) => {
     doc.setFont('helvetica', bold ? 'bold' : 'normal');
     doc.setFontSize(bold ? 11 : 9);
@@ -139,7 +171,7 @@ export function openQuotePdf(quote: Quote): void {
     doc.text(value, width - margin, y, { align: 'right' });
     y += bold ? 8 : 6;
   };
-  addTotal('Zwischensumme', formatCHF(Number(quote.subtotal)));
+  addTotal('Zwischensumme inkl. Optionen', formatCHF(Number(quote.subtotal)));
   addTotal('Rabatt', `- ${formatCHF(Number(quote.discount_amount))}`);
   addTotal(`MwSt. ${quote.tax_rate}%`, formatCHF(Number(quote.tax_amount)));
   doc.setDrawColor(...BRAND.light);
