@@ -137,7 +137,7 @@ export function downloadOrderPdf(order: Order): void {
 
     // ── TOTALS ───────────────────────────────────────────────────────────────
     y += 8;
-    const totalsX = width - margin - 75;
+    const totalsX = width - margin - 42;
     const addTotal = (label: string, value: string, bold = false) => {
       doc.setFont('helvetica', bold ? 'bold' : 'normal');
       doc.setFontSize(bold ? 11 : 9);

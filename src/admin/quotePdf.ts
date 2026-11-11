@@ -99,7 +99,7 @@ export function openQuotePdf(quote: Quote): void {
   const requiredItems = (quote.items ?? []).filter(item => !item.optional);
   const optionalItems = (quote.items ?? []).filter(item => item.optional);
   const requiredSubtotal = requiredItems.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unit_price), 0);
-  const totalsX = width - margin - 75;
+  const totalsX = width - margin - 42;
 
   const drawSectionLabel = (label: string) => {
     if (y + 12 > 270) {

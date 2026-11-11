@@ -183,7 +183,7 @@ export async function openInvoicePdf(invoice: Invoice, items: InvoiceItem[]): Pr
 
   // ── TOTALS ───────────────────────────────────────────────────────────────
   rowY += 8;
-  const totalsX = W - margin - 75;
+  const totalsX = W - margin - 42;
 
   const addRow = (label: string, value: string, bold = false) => {
     doc.setFont('helvetica', bold ? 'bold' : 'normal');
